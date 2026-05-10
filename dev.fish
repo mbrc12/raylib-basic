@@ -14,8 +14,8 @@ end
 
 if set -q _flag_compile
     set -l target $_flag_compile
-    if test "$target" != "opengl" -a "$target" != "angle"
-        echo "usage: fish dev.fish --compile [angle|opengl]"
+    if test "$target" != "opengl" -a "$target" != "angle" -a "$target" != "web"
+        echo "usage: fish dev.fish --compile [angle|opengl|web]"
         exit 1
     end
 
@@ -35,5 +35,5 @@ if set -q _flag_run
     end
 end
 
-echo "usage: fish dev.fish --compile [angle|opengl] | --run [angle|opengl]"
+echo "usage: fish dev.fish --compile [angle|opengl|web] | --run [angle|opengl]"
 exit 1
