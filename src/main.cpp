@@ -29,7 +29,7 @@ void Update(float dt) {}
 void Draw() {
     BeginTextureMode(canvas);
     ClearBackground(colors::SteamLords_MidnightBlack);
-    DrawRectangle(90, 250, 780, 12, colors::SteamLords_IndigoBerry);
+    DrawRectangle(90, 250, 780, 12, colors::SteamLords_PaleTeal);
     EndTextureMode();
 
     effect->send("resolution", Vector2{static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
@@ -45,6 +45,7 @@ void Draw() {
         Rectangle{0.0f, 0.0f, static_cast<float>(canvas.texture.width), static_cast<float>(-canvas.texture.height)},
         Vector2{0.0f, 0.0f}, colors::PureWhite);
     effect->disable();
+
     DrawFPS(12, 12);
     EndDrawing();
 }

@@ -12,11 +12,11 @@ out vec4 finalColor;
 
 void main() {
     vec2 xy = gl_FragCoord.xy / resolution;
+    vec4 canvas = texture(texture0, fragTexCoord);
+
     float t = xy.x * 3.0 + xy.y * 9.0;
     t = mod(t + time, 1.0);
-    if (t < 0.5) {
-        finalColor = colorA * colDiffuse * fragColor;
-    } else {
-        finalColor = colorB * colDiffuse * fragColor;
-    }
+    vec4 pattern = (t < 0.5) ? colorA : colorB;
+
+    finalColor = mix(canvas, pattern * colDiffuse * fragColor, 0.3);
 }
