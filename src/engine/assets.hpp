@@ -1,21 +1,20 @@
 #pragma once
 
-#include "raylib.h"
-
 #include <string>
 
-namespace engine {
+#include "raylib.h"
+#include "resource.hpp"
+#include "shader.hpp"
 
-struct ShaderSources {
-    std::string vertex;
-    std::string fragment;
-};
+namespace engine::assets {
 
-std::string readFile(const char *path);
+void init();
 
-Texture2D loadTexture(const char *name);
-Image loadImage(const char *name);
-ShaderSources loadShader(const char *name);
-Font loadFont(const char *name);
+Resource<Shader> shader(const char* name);
+Resource<Texture2D> texture(const char* name);
+Resource<Font> font(const char* name);
 
-} // namespace engine
+Image image(const char* name);
+std::string readFile(const char* path);
+
+} // namespace engine::assets

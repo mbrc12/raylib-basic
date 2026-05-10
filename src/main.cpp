@@ -1,7 +1,7 @@
 #include "raylib.h"
 
+#include "engine/assets.hpp"
 #include "engine/mainloop.hpp"
-#include "engine/shader.hpp"
 
 #ifndef PROJECT_WINDOW_TITLE
 #define PROJECT_WINDOW_TITLE "game"
@@ -12,15 +12,14 @@ constexpr int kScreenWidth = 960;
 constexpr int kScreenHeight = 540;
 
 RenderTexture2D gTarget{};
-engine::Shader gShader{};
+engine::Resource<engine::Shader> gShader = engine::assets::shader("effect");
 float gTime = 0.0f;
 
 void InitializeScene() {
     gTarget = LoadRenderTexture(kScreenWidth, kScreenHeight);
-    gShader = engine::Shader("effect");
 
     TraceLog(LOG_INFO, "APP: Render texture valid: %s", IsRenderTextureValid(gTarget) ? "yes" : "no");
-    TraceLog(LOG_INFO, "APP: Shader valid: %s", gShader.valid() ? "yes" : "no");
+    TraceLog(LOG_INFO, "APP: Shader valid: %s", gShader->valid() ? "yes" : "no");
 }
 
 void DrawFrame() {
@@ -35,17 +34,17 @@ void DrawFrame() {
     DrawText("uses #version 300 es + texelFetch()", 100, 235, 24, Color{180, 232, 255, 255});
     EndTextureMode();
 
-    gShader.send("resolution", Vector2{static_cast<float>(kScreenWidth), static_cast<float>(kScreenHeight)});
-    gShader.send("time", gTime);
+    gShader->send("resolution", Vector2{static_cast<float>(kScreenWidth), static_cast<float>(kScreenHeight)});
+    gShader->send("time", gTime);
 
     BeginDrawing();
     ClearBackground(Color{18, 24, 31, 255});
-    gShader.enable();
+    gShader->enable();
     DrawTextureRec(
         gTarget.texture,
         Rectangle{0.0f, 0.0f, static_cast<float>(gTarget.texture.width), static_cast<float>(-gTarget.texture.height)},
         Vector2{0.0f, 0.0f}, WHITE);
-    gShader.disable();
+    gShader->disable();
     DrawFPS(12, 12);
     EndDrawing();
 }
@@ -59,7 +58,6 @@ int main() {
     runMainLoop(DrawFrame);
 
     gTarget = {};
-    gShader = {};
     CloseWindow();
 
     return 0;

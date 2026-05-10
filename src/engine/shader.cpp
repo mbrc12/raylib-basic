@@ -1,7 +1,5 @@
 #include "shader.hpp"
 
-#include "assets.hpp"
-
 #include <string>
 
 namespace engine {
@@ -22,11 +20,12 @@ precision highp float;
 
 Shader::Shader() {}
 
-Shader::Shader(const char *name) {
-    auto sources = loadShader(name);
-    std::string vertexSource = shaderHeader() + sources.vertex;
-    std::string fragmentSource = shaderHeader() + sources.fragment;
-    m_shader = LoadShaderFromMemory(vertexSource.c_str(), fragmentSource.c_str());
+Shader::Shader(::Shader raw) : m_shader(raw) {}
+
+Shader::Shader(const char* vertSource, const char* fragSource) {
+    std::string vert = shaderHeader() + vertSource;
+    std::string frag = shaderHeader() + fragSource;
+    m_shader = LoadShaderFromMemory(vert.c_str(), frag.c_str());
 }
 
 Shader::~Shader() {
@@ -35,11 +34,9 @@ Shader::~Shader() {
     }
 }
 
-Shader::Shader(Shader &&other) noexcept : m_shader(other.m_shader) {
-    other.m_shader = {};
-}
+Shader::Shader(Shader&& other) noexcept : m_shader(other.m_shader) { other.m_shader = {}; }
 
-Shader &Shader::operator=(Shader &&other) noexcept {
+Shader& Shader::operator=(Shader&& other) noexcept {
     if (this != &other) {
         if (IsShaderValid(m_shader)) {
             UnloadShader(m_shader);
@@ -50,32 +47,46 @@ Shader &Shader::operator=(Shader &&other) noexcept {
     return *this;
 }
 
-void Shader::enable() {
-    BeginShaderMode(m_shader);
-}
+void Shader::enable() { BeginShaderMode(m_shader); }
 
-void Shader::disable() {
-    EndShaderMode();
-}
+void Shader::disable() { EndShaderMode(); }
 
-void Shader::send(const char *name, const float *values, int uniformType) {
+void Shader::send(const char* name, const float* values, int uniformType) {
     SetShaderValue(m_shader, getLocation(name), values, uniformType);
 }
 
-void Shader::send(const char *name, const Vector2 &value) {
-    SetShaderValue(m_shader, getLocation(name), &value.x, SHADER_UNIFORM_VEC2);
-}
-
-void Shader::send(const char *name, float value) {
+void Shader::send(const char* name, float value) {
     SetShaderValue(m_shader, getLocation(name), &value, SHADER_UNIFORM_FLOAT);
 }
 
-bool Shader::valid() const {
-    return IsShaderValid(m_shader);
+void Shader::send(const char* name, const Vector2& value) {
+    SetShaderValue(m_shader, getLocation(name), &value.x, SHADER_UNIFORM_VEC2);
 }
 
-int Shader::getLocation(const char *name) {
-    return GetShaderLocation(m_shader, name);
+void Shader::send(const char* name, const Vector3& value)  {
+    SetShaderValue(m_shader, getLocation(name), &value.x, SHADER_UNIFORM_VEC3);
 }
+
+void Shader::send(const char* name, const float* values, int uniformType, int count)  {
+    SetShaderValueV(m_shader, getLocation(name), values, uniformType, count);
+}
+
+void Shader::send(const char* name, const Vector2* values, int count)  {
+    SetShaderValueV(m_shader, getLocation(name), values, SHADER_UNIFORM_VEC2, count);
+}
+
+void Shader::send(const char* name, const Vector3* values, int count)  {
+    SetShaderValueV(m_shader, getLocation(name), values, SHADER_UNIFORM_VEC3, count);
+}
+
+void Shader::send(const char* name, const Texture2D& texture)  {
+    SetShaderValueTexture(m_shader, getLocation(name), texture);
+}
+
+void Shader::send(const char* name, const Matrix& mat)  { SetShaderValueMatrix(m_shader, getLocation(name), mat); }
+
+bool Shader::valid() { return IsShaderValid(m_shader); }
+
+int Shader::getLocation(const char* name)  { return GetShaderLocation(m_shader, name); }
 
 } // namespace engine

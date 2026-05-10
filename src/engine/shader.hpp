@@ -2,15 +2,13 @@
 
 #include "raylib.h"
 
-#include <string>
-
 namespace engine {
 
 class Shader {
-public:
+  public:
     Shader();
-
-    Shader(const char *name);
+    Shader(const char* vertSource, const char* fragSource);
+    explicit Shader(::Shader raw);
 
     ~Shader();
 
@@ -24,10 +22,16 @@ public:
     void disable();
 
     void send(const char* name, const float* values, int uniformType);
-    void send(const char* name, const Vector2& value);
     void send(const char* name, float value);
+    void send(const char* name, const Vector2& value);
+    void send(const char* name, const Vector3& value);
+    void send(const char* name, const float* values, int uniformType, int count);
+    void send(const char* name, const Vector2* values, int count);
+    void send(const char* name, const Vector3* values, int count);
+    void send(const char* name, const Texture2D& texture);
+    void send(const char* name, const Matrix& mat);
 
-    bool valid() const;
+    bool valid();
 
   private:
     ::Shader m_shader{};

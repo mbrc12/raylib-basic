@@ -7,10 +7,10 @@
 #include <string>
 #include <unordered_map>
 
-namespace engine {
+namespace engine::assets {
 namespace {
 
-std::string assetPath(const char* relativePath) {
+std::string resolvePath(const char* relativePath) {
 #if defined(__EMSCRIPTEN__)
     return relativePath;
 #else
@@ -26,50 +26,149 @@ struct ShaderPaths {
 std::unordered_map<std::string, ShaderPaths> gShaderPaths;
 std::unordered_map<std::string, std::string> gTexturePaths;
 std::unordered_map<std::string, std::string> gFontPaths;
-bool gIndexLoaded = false;
 
-void loadIndex() {
-    if (gIndexLoaded)
+std::unordered_map<std::string, Resource<Shader>> gShaderCache;
+std::unordered_map<std::string, Resource<Texture2D>> gTextureCache;
+std::unordered_map<std::string, Resource<Font>> gFontCache;
+
+bool gInitialized = false;
+
+std::string loadIndexText() {
+    std::string path = resolvePath("assets/index.toml");
+    return readFile(path.c_str());
+}
+
+void parseIndex(const std::string& indexText) {
+    if (indexText.empty())
         return;
 
-    std::string indexText = readFile(assetPath("assets/index.toml").c_str());
-    auto table = toml::parse(indexText);
+    toml::table table;
+    try {
+        table = toml::parse(indexText);
+    } catch (const toml::parse_error& e) {
+        TraceLog(LOG_WARNING, "ASSETS: Failed to parse index: %s", e.what());
+        return;
+    }
 
     if (table.contains("shaders")) {
         auto shaders = *table["shaders"].as_table();
         for (const auto& [key, value] : shaders) {
             if (auto entry = value.as_table()) {
                 ShaderPaths paths;
+                std::string prefix = resolvePath("assets/shaders/");
                 if (auto v = (*entry)["vert"].as_string()) {
-                    paths.vert = assetPath(v->get().c_str());
+                    paths.vert = prefix + v->get();
                 }
                 if (auto v = (*entry)["frag"].as_string()) {
-                    paths.frag = assetPath(v->get().c_str());
+                    paths.frag = prefix + v->get();
                 }
                 gShaderPaths[std::string(key)] = paths;
             }
         }
     }
 
-    auto loadSimpleSection = [](const toml::table& tbl, const char* section,
-                                std::unordered_map<std::string, std::string>& out) {
+    auto loadSection = [](const toml::table& tbl, const char* section,
+                          std::unordered_map<std::string, std::string>& out, const char* subdir) {
         if (tbl.contains(section)) {
+            std::string prefix = resolvePath(subdir);
             auto entries = *tbl[section].as_table();
             for (const auto& [key, value] : entries) {
                 if (auto path = value.as_string()) {
-                    out[std::string(key)] = assetPath(path->get().c_str());
+                    out[std::string(key)] = prefix + path->get();
                 }
             }
         }
     };
 
-    loadSimpleSection(table, "textures", gTexturePaths);
-    loadSimpleSection(table, "fonts", gFontPaths);
-
-    gIndexLoaded = true;
+    loadSection(table, "textures", gTexturePaths, "assets/textures/");
+    loadSection(table, "fonts", gFontPaths, "assets/fonts/");
 }
 
 } // namespace
+
+void init() {
+    if (gInitialized)
+        return;
+
+    std::string indexText = loadIndexText();
+    if (indexText.empty()) {
+        TraceLog(LOG_WARNING, "ASSETS: Could not read index.toml");
+    } else {
+        parseIndex(indexText);
+    }
+
+    gInitialized = true;
+}
+
+Resource<Shader> shader(const char* name) {
+    init();
+
+    auto it = gShaderCache.find(name);
+    if (it != gShaderCache.end())
+        return it->second;
+
+    auto pathIt = gShaderPaths.find(name);
+    if (pathIt == gShaderPaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Shader '%s' not found in index", name);
+        return Resource<Shader>();
+    }
+
+    std::string vertSource = readFile(pathIt->second.vert.c_str());
+    std::string fragSource = readFile(pathIt->second.frag.c_str());
+    auto res = Resource<Shader>(new Shader(vertSource.c_str(), fragSource.c_str()));
+    gShaderCache[name] = res;
+    return res;
+}
+
+Resource<Texture2D> texture(const char* name) {
+    init();
+
+    auto it = gTextureCache.find(name);
+    if (it != gTextureCache.end())
+        return it->second;
+
+    auto pathIt = gTexturePaths.find(name);
+    if (pathIt == gTexturePaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Texture '%s' not found in index", name);
+        return Resource<Texture2D>();
+    }
+
+    Texture2D t = LoadTexture(pathIt->second.c_str());
+    Resource<Texture2D> res(t);
+    gTextureCache[name] = res;
+    return res;
+}
+
+Resource<Font> font(const char* name) {
+    init();
+
+    auto it = gFontCache.find(name);
+    if (it != gFontCache.end())
+        return it->second;
+
+    auto pathIt = gFontPaths.find(name);
+    if (pathIt == gFontPaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Font '%s' not found in index", name);
+        return Resource<Font>();
+    }
+
+    Font f = LoadFont(pathIt->second.c_str());
+    Resource<Font> res(f);
+    gFontCache[name] = res;
+    return res;
+}
+
+Image image(const char* name) {
+    init();
+
+    auto pathIt = gTexturePaths.find(name);
+    if (pathIt == gTexturePaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Image '%s' not found in index", name);
+        return {};
+    }
+
+    return LoadImage(pathIt->second.c_str());
+}
 
 std::string readFile(const char* path) {
     std::ifstream file(path);
@@ -78,44 +177,4 @@ std::string readFile(const char* path) {
     return contents.str();
 }
 
-Texture2D loadTexture(const char* name) {
-    loadIndex();
-    auto it = gTexturePaths.find(name);
-    if (it == gTexturePaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Texture '%s' not found in index", name);
-        return {};
-    }
-    return LoadTexture(it->second.c_str());
-}
-
-Image loadImage(const char* name) {
-    loadIndex();
-    auto it = gTexturePaths.find(name);
-    if (it == gTexturePaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Image '%s' not found in index", name);
-        return {};
-    }
-    return LoadImage(it->second.c_str());
-}
-
-ShaderSources loadShader(const char* name) {
-    loadIndex();
-    auto it = gShaderPaths.find(name);
-    if (it == gShaderPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Shader '%s' not found in index", name);
-        return {};
-    }
-    return {readFile(it->second.vert.c_str()), readFile(it->second.frag.c_str())};
-}
-
-Font loadFont(const char* name) {
-    loadIndex();
-    auto it = gFontPaths.find(name);
-    if (it == gFontPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Font '%s' not found in index", name);
-        return {};
-    }
-    return LoadFont(it->second.c_str());
-}
-
-} // namespace engine
+} // namespace engine::assets
