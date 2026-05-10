@@ -9,7 +9,6 @@
 #define PROJECT_WINDOW_TITLE "game"
 #endif
 
-namespace {
 constexpr int screenWidth = 960;
 constexpr int screenHeight = 540;
 constexpr int terrainTexSize = 256;
@@ -123,7 +122,6 @@ void Frame() {
     Update(dt);
     Draw();
 }
-} // namespace
 
 int main() {
     InitWindow(screenWidth, screenHeight, PROJECT_WINDOW_TITLE);
