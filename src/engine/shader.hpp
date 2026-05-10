@@ -33,6 +33,8 @@ class Shader {
     void send(const char* name, const Color& color);
 
     bool valid();
+    void unload();
+    const ::Shader& raw() const { return m_shader; }
 
   private:
     ::Shader m_shader{};

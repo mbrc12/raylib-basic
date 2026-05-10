@@ -28,19 +28,12 @@ Shader::Shader(const char* vertSource, const char* fragSource) {
     m_shader = LoadShaderFromMemory(vert.c_str(), frag.c_str());
 }
 
-Shader::~Shader() {
-    if (IsShaderValid(m_shader)) {
-        UnloadShader(m_shader);
-    }
-}
+Shader::~Shader() {}
 
 Shader::Shader(Shader&& other) noexcept : m_shader(other.m_shader) { other.m_shader = {}; }
 
 Shader& Shader::operator=(Shader&& other) noexcept {
     if (this != &other) {
-        if (IsShaderValid(m_shader)) {
-            UnloadShader(m_shader);
-        }
         m_shader = other.m_shader;
         other.m_shader = {};
     }
@@ -91,6 +84,13 @@ void Shader::send(const char* name, const Color& color) {
 }
 
 bool Shader::valid() { return IsShaderValid(m_shader); }
+
+void Shader::unload() {
+    if (IsShaderValid(m_shader)) {
+        UnloadShader(m_shader);
+        m_shader = {};
+    }
+}
 
 int Shader::getLocation(const char* name)  { return GetShaderLocation(m_shader, name); }
 

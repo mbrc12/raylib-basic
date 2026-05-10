@@ -3,16 +3,17 @@
 #include <string>
 
 #include "raylib.h"
-#include "resource.hpp"
 #include "shader.hpp"
 
 namespace engine::assets {
 
 void init();
+void manual_unload();
 
-Resource<Shader> shader(const char* name);
-Resource<Texture2D> texture(const char* name);
-Resource<Font> font(const char* name);
+Shader* shader(const char* name);
+Texture2D* texture(const char* name);
+Font* font(const char* name);
+Model* model(const char* name);
 
 Image image(const char* name);
 std::string readFile(const char* path);

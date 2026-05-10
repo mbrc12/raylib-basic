@@ -1,7 +1,11 @@
 [shaders]
 effect = { vert = "effect.vert", frag = "effect.frag" }
+lambert = { vert = "lambert.vert", frag = "lambert.frag" }
 
 [textures]
 
 [fonts]
 main = "capital-hill.ttf"
+
+[models]
+fish = "Fish.glb"

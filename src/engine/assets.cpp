@@ -26,10 +26,12 @@ struct ShaderPaths {
 std::unordered_map<std::string, ShaderPaths> gShaderPaths;
 std::unordered_map<std::string, std::string> gTexturePaths;
 std::unordered_map<std::string, std::string> gFontPaths;
+std::unordered_map<std::string, std::string> gModelPaths;
 
-std::unordered_map<std::string, Resource<Shader>> gShaderCache;
-std::unordered_map<std::string, Resource<Texture2D>> gTextureCache;
-std::unordered_map<std::string, Resource<Font>> gFontCache;
+std::unordered_map<std::string, Shader*> gShaderCache;
+std::unordered_map<std::string, Texture2D*> gTextureCache;
+std::unordered_map<std::string, Font*> gFontCache;
+std::unordered_map<std::string, Model*> gModelCache;
 
 bool gInitialized = false;
 
@@ -82,6 +84,7 @@ void parseIndex(const std::string& indexText) {
 
     loadSection(table, "textures", gTexturePaths, "assets/textures/");
     loadSection(table, "fonts", gFontPaths, "assets/fonts/");
+    loadSection(table, "models", gModelPaths, "assets/models/");
 }
 
 } // namespace
@@ -100,7 +103,33 @@ void init() {
     gInitialized = true;
 }
 
-Resource<Shader> shader(const char* name) {
+void manual_unload() {
+    for (auto& [name, ptr] : gShaderCache) {
+        ptr->unload();
+        delete ptr;
+    }
+    gShaderCache.clear();
+
+    for (auto& [name, ptr] : gTextureCache) {
+        UnloadTexture(*ptr);
+        delete ptr;
+    }
+    gTextureCache.clear();
+
+    for (auto& [name, ptr] : gFontCache) {
+        UnloadFont(*ptr);
+        delete ptr;
+    }
+    gFontCache.clear();
+
+    for (auto& [name, ptr] : gModelCache) {
+        UnloadModel(*ptr);
+        delete ptr;
+    }
+    gModelCache.clear();
+}
+
+Shader* shader(const char* name) {
     init();
 
     auto it = gShaderCache.find(name);
@@ -110,17 +139,17 @@ Resource<Shader> shader(const char* name) {
     auto pathIt = gShaderPaths.find(name);
     if (pathIt == gShaderPaths.end()) {
         TraceLog(LOG_WARNING, "ASSETS: Shader '%s' not found in index", name);
-        return Resource<Shader>();
+        return nullptr;
     }
 
     std::string vertSource = readFile(pathIt->second.vert.c_str());
     std::string fragSource = readFile(pathIt->second.frag.c_str());
-    auto res = Resource<Shader>(new Shader(vertSource.c_str(), fragSource.c_str()));
+    auto* res = new Shader(vertSource.c_str(), fragSource.c_str());
     gShaderCache[name] = res;
     return res;
 }
 
-Resource<Texture2D> texture(const char* name) {
+Texture2D* texture(const char* name) {
     init();
 
     auto it = gTextureCache.find(name);
@@ -130,16 +159,15 @@ Resource<Texture2D> texture(const char* name) {
     auto pathIt = gTexturePaths.find(name);
     if (pathIt == gTexturePaths.end()) {
         TraceLog(LOG_WARNING, "ASSETS: Texture '%s' not found in index", name);
-        return Resource<Texture2D>();
+        return nullptr;
     }
 
-    Texture2D t = LoadTexture(pathIt->second.c_str());
-    Resource<Texture2D> res(t);
+    auto* res = new Texture2D(LoadTexture(pathIt->second.c_str()));
     gTextureCache[name] = res;
     return res;
 }
 
-Resource<Font> font(const char* name) {
+Font* font(const char* name) {
     init();
 
     auto it = gFontCache.find(name);
@@ -149,12 +177,29 @@ Resource<Font> font(const char* name) {
     auto pathIt = gFontPaths.find(name);
     if (pathIt == gFontPaths.end()) {
         TraceLog(LOG_WARNING, "ASSETS: Font '%s' not found in index", name);
-        return Resource<Font>();
+        return nullptr;
     }
 
-    Font f = LoadFont(pathIt->second.c_str());
-    Resource<Font> res(f);
+    auto* res = new Font(LoadFont(pathIt->second.c_str()));
     gFontCache[name] = res;
+    return res;
+}
+
+Model* model(const char* name) {
+    init();
+
+    auto it = gModelCache.find(name);
+    if (it != gModelCache.end())
+        return it->second;
+
+    auto pathIt = gModelPaths.find(name);
+    if (pathIt == gModelPaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Model '%s' not found in index", name);
+        return nullptr;
+    }
+
+    auto* res = new Model(LoadModel(pathIt->second.c_str()));
+    gModelCache[name] = res;
     return res;
 }
 
