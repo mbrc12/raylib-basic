@@ -27,6 +27,7 @@ add_executable(${GAME_NAME}
     src/engine/assets.cpp
     src/engine/mainloop.cpp
     src/engine/shader.cpp
+    src/engine/collision.cpp
 )
 target_compile_definitions(${GAME_NAME} PRIVATE PROJECT_WINDOW_TITLE="${GAME_NAME}")
 target_include_directories(${GAME_NAME} PRIVATE src)

@@ -94,13 +94,13 @@ void Draw() {
     lambert->send("fogColor", colors::SteamLords_SteelBlue);
     lambert->send("fogDensity", 0.1f);
 
-    DrawModel(terrainModel, ORIGIN, 1.0f, WHITE);
+    DrawModel(terrainModel, ORIGIN.v(), 1.0f, WHITE);
 
     Vector3 fishPos{
         terrainWorldSize / 2.0f,
         terrainMaxHeight + 4.0f,
         terrainWorldSize / 2.0f + 3.0f};
-    DrawModelEx(*fish, fishPos, UP, total_time * 80, {0.4, 0.4, 0.4}, colors::PureWhite);
+    DrawModelEx(*fish, fishPos, UP.v(), total_time * 80, {0.4, 0.4, 0.4}, colors::PureWhite);
 
     EndMode3D();
 

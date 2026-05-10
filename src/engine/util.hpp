@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "raylib.h"
+#include "vec3.hpp"
 
 namespace util {
 
@@ -36,6 +37,6 @@ inline void dbg_impl(const char *file, int line, const char *fmt, ...) {
 
 } // namespace util
 
-Vector3 ORIGIN{0.0, 0.0, 0.0};
-Vector3 UP{0.0, 1.0, 0.0};
+Vec3 ORIGIN{0, 0, 0};
+Vec3 UP{0, 1, 0};
 
