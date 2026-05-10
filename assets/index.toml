@@ -1,6 +1,6 @@
 [shaders]
-effect = { vert = "effect.vert", frag = "effect.frag" }
 lambert = { vert = "lambert.vert", frag = "lambert.frag" }
+depth = { vert = "depth.vert", frag = "depth.frag" }
 
 [textures]
 

@@ -25,8 +25,11 @@ endif()
 add_executable(${GAME_NAME}
     src/main.cpp
     src/engine/assets.cpp
+    src/engine/free_camera.cpp
     src/engine/mainloop.cpp
+    src/engine/model_shader_scope.cpp
     src/engine/shader.cpp
+    src/engine/shadow.cpp
     src/engine/collision.cpp
 )
 target_compile_definitions(${GAME_NAME} PRIVATE PROJECT_WINDOW_TITLE="${GAME_NAME}")

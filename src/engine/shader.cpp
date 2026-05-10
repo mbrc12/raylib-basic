@@ -85,6 +85,10 @@ void Shader::send(const char* name, const Color& color) {
 
 bool Shader::valid() { return IsShaderValid(m_shader); }
 
+void Shader::bindLocation(int locIndex, const char* name) {
+    m_shader.locs[locIndex] = getLocation(name);
+}
+
 void Shader::unload() {
     if (IsShaderValid(m_shader)) {
         UnloadShader(m_shader);

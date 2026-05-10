@@ -34,6 +34,7 @@ class Shader {
 
     bool valid();
     void unload();
+    void bindLocation(int locIndex, const char* name);
     const ::Shader& raw() const { return m_shader; }
 
   private:

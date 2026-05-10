@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Shadow Mapping in raylt</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <style>
+  body {
+      margin: 0;
+      padding: 24px 28px 40px;
+      max-width: 920px;
+      line-height: 1.55;
+  }
+
+  pre, code {
+      font-size: 0.95em;
+  }
+
+  img, table {
+      max-width: 100%;
+  }
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Shadow Mapping in raylt</h1>
+</header>
+<h1 id="shadow-mapping-in-raylt">Shadow Mapping in
+<code>raylt</code></h1>
+<p>This repo uses classic shadow mapping for a directional light. The
+implementation is intentionally simple, but the math underneath is the
+same math used by larger engines:</p>
+<ol type="1">
+<li>Render the scene from the light's point of view into a depth
+texture.</li>
+<li>Render the scene from the player camera.</li>
+<li>For each shaded fragment, transform its world position into light
+space.</li>
+<li>Compare the fragment's light-space depth against the stored depth
+from pass 1.</li>
+</ol>
+<p>The relevant code currently lives in:</p>
+<ul>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/main.cpp">src/main.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/shadow.hpp">src/engine/shadow.hpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/shadow.cpp">src/engine/shadow.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.hpp">src/engine/model_shader_scope.hpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.cpp">src/engine/model_shader_scope.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/shader.cpp">src/engine/shader.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/assets/shaders/depth.vert">assets/shaders/depth.vert</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/assets/shaders/depth.frag">assets/shaders/depth.frag</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/assets/shaders/lambert.vert">assets/shaders/lambert.vert</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/assets/shaders/lambert.frag">assets/shaders/lambert.frag</a></li>
+</ul>
+<p>The current pipeline is:</p>
+<pre class="text"><code>world geometry -&gt; light camera -&gt; shadow map
+world geometry -&gt; player camera -&gt; lighting shader -&gt; compare against shadow map</code></pre>
+<h2 id="the-core-test">1. The Core Test</h2>
+<p>At the heart of shadow mapping is a depth comparison.</p>
+<p>For a world-space point <span
+class="math inline">\mathbf{p}_{\mathrm{world}}</span>, we compute its
+coordinates in the light's clip space:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{clip}}^{L} =
+M_{\mathrm{lightVP}}\,\mathbf{p}_{\mathrm{world}}
+</span></p>
+<p>Then we divide by <span class="math inline">w</span> to get
+normalized device coordinates:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{ndc}}^{L} =
+\frac{\mathbf{p}_{\mathrm{clip}}^{L}}{w_{\mathrm{clip}}^{L}}
+</span></p>
+<p>Then we remap from <span class="math inline">[-1,1]</span> into <span
+class="math inline">[0,1]</span>:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{uvz}}^{L} = \frac{\mathbf{p}_{\mathrm{ndc}}^{L}}{2}
++ \frac{1}{2}
+</span></p>
+<p>The <code>x</code> and <code>y</code> components become texture
+coordinates into the shadow map. The <code>z</code> component is the
+depth of the current fragment from the light.</p>
+<p>Let:</p>
+<ul>
+<li><span class="math inline">z_{\mathrm{current}}</span> be the current
+fragment depth in light space</li>
+<li><span class="math inline">z_{\mathrm{stored}}</span> be the depth
+stored in the shadow map</li>
+<li><span class="math inline">\beta</span> be the depth bias</li>
+</ul>
+<p>Then the visibility test is:</p>
+<p><span class="math display">
+z_{\mathrm{current}} - \beta &gt; z_{\mathrm{stored}}
+</span></p>
+<p>If that inequality is true, the fragment is behind something the
+light already saw, so it is shadowed.</p>
+<h2 id="coordinate-spaces">2. Coordinate Spaces</h2>
+<p>The implementation moves geometry through several spaces:</p>
+<ol type="1">
+<li>object space</li>
+<li>world space</li>
+<li>light view space</li>
+<li>light clip space</li>
+<li>light NDC</li>
+<li>shadow-map UV space</li>
+</ol>
+<p>For a vertex position <span
+class="math inline">\mathbf{p}_{\mathrm{obj}}</span>:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{world}} =
+M_{\mathrm{model}}\,\mathbf{p}_{\mathrm{obj}}
+</span></p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{view}}^{L} =
+M_{\mathrm{view}}^{L}\,\mathbf{p}_{\mathrm{world}}
+</span></p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{clip}}^{L} =
+M_{\mathrm{proj}}^{L}\,\mathbf{p}_{\mathrm{view}}^{L}
+</span></p>
+<p>So the composition is:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{clip}}^{L} = M_{\mathrm{proj}}^{L}
+M_{\mathrm{view}}^{L} M_{\mathrm{model}} \mathbf{p}_{\mathrm{obj}}
+</span></p>
+<p>The repo stores the light view-projection part in
+<code>lightVP</code>, and keeps the per-object model transform separate
+as <code>matModel</code>.</p>
+<h2 id="model-view-and-projection">2.1 Model, View, and Projection</h2>
+<p>The acronym <code>MVP</code> is shorthand for:</p>
+<p><span class="math display">
+M_{\mathrm{MVP}} = M_{\mathrm{proj}} M_{\mathrm{view}}
+M_{\mathrm{model}}
+</span></p>
+<p>Each matrix has a different job:</p>
+<ul>
+<li><code>M_{\mathrm{model}}</code> places a mesh instance into world
+space.</li>
+<li><code>M_{\mathrm{view}}</code> expresses that world from the
+camera's frame of reference.</li>
+<li><code>M_{\mathrm{proj}}</code> maps the camera frustum into clip
+space.</li>
+</ul>
+<p>In the lit pass, raylib already supplies a per-draw <code>mvp</code>
+uniform that contains the player's projection, view, and the object's
+model transform. The shader uses:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{clip}}^{\mathrm{camera}} =
+M_{\mathrm{mvp}}\,\mathbf{p}_{\mathrm{obj}}
+</span></p>
+<p>and writes:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">gl_Position</span> <span class="op">=</span> mvp <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span></code></pre></div>
+<p>In the shadow pass, the game does not want the player's camera
+transform. It wants the light's transform. That is why the shadow code
+keeps the transforms split into:</p>
+<p><span class="math display">
+M_{\mathrm{lightVP}} = M_{\mathrm{proj}}^{L} M_{\mathrm{view}}^{L}
+</span></p>
+<p>and then multiplies by <code>matModel</code> separately per
+object:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{clip}}^{L} = M_{\mathrm{lightVP}} M_{\mathrm{model}}
+\mathbf{p}_{\mathrm{obj}}
+</span></p>
+<p>This split is important for two reasons:</p>
+<ol type="1">
+<li><code>lightVP</code> is shared by every object in the shadow
+pass.</li>
+<li><code>matModel</code> changes per object instance, so it must stay
+separate.</li>
+</ol>
+<p>If <code>matModel</code> were baked into <code>lightVP</code>, the
+matrix would no longer be reusable for other objects, and the shadow
+pass would stop being a clean "same light, different object"
+transform.</p>
+<h3 id="why-this-matters">Why this matters</h3>
+<p>Shadow mapping only works if the depth pass and the lighting pass use
+the same transform. If pass 1 stores depth using one light matrix and
+pass 2 compares using another, the numbers are not comparable and the
+result is either:</p>
+<ul>
+<li>everything shadowed</li>
+<li>nothing shadowed</li>
+<li>giant misaligned shadows</li>
+</ul>
+<h2 id="the-directional-light-camera">3. The Directional Light
+Camera</h2>
+<p>The shadow camera is set up in [src/engine/shadow.cpp]:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> DirectionalShadow<span class="op">::</span>init<span class="op">(</span><span class="dt">int</span> size<span class="op">,</span> <span class="at">const</span> Vector3<span class="op">&amp;</span> sunDir<span class="op">,</span> <span class="at">const</span> Vector3<span class="op">&amp;</span> target<span class="op">,</span> <span class="dt">float</span> distance<span class="op">,</span> <span class="dt">float</span> orthoSize<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    map <span class="op">=</span> LoadRenderTexture<span class="op">(</span>size<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    SetTextureFilter<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_FILTER_POINT<span class="op">);</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    SetTextureWrap<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_WRAP_CLAMP<span class="op">);</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    Vector3 lightDir <span class="op">=</span> Vector3Normalize<span class="op">(</span>sunDir<span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    Vector3 lightPos <span class="op">=</span> Vector3Add<span class="op">(</span>target<span class="op">,</span> Vector3Scale<span class="op">(</span>lightDir<span class="op">,</span> distance<span class="op">));</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    Matrix lightProj <span class="op">=</span> MatrixOrtho<span class="op">(-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="op">-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="fl">0.1</span><span class="bu">f</span><span class="op">,</span> <span class="fl">200.0</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    Matrix lightView <span class="op">=</span> MatrixLookAt<span class="op">(</span>lightPos<span class="op">,</span> target<span class="op">,</span> Vector3<span class="op">{</span><span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">});</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    lightVP <span class="op">=</span> MatrixMultiply<span class="op">(</span>lightView<span class="op">,</span> lightProj<span class="op">);</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>position <span class="op">=</span> lightPos<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>target <span class="op">=</span> target<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>up <span class="op">=</span> Vector3<span class="op">{</span><span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">};</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>fovy <span class="op">=</span> orthoSize <span class="op">*</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>projection <span class="op">=</span> CAMERA_ORTHOGRAPHIC<span class="op">;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The game is using a directional light, not a point light. That means
+the light rays are parallel, so the correct projection is
+orthographic.</p>
+<h3 id="orthographic-projection">Orthographic projection</h3>
+<p>In an orthographic projection, positions are mapped linearly into
+clip space. There is no perspective divide based on distance from the
+light. This is what you want for a sun:</p>
+<p><span class="math display">
+M_{\mathrm{proj}}^{L} =
+\begin{bmatrix}
+\frac{2}{r-l} &amp; 0 &amp; 0 &amp; -\frac{r+l}{r-l} \\
+0 &amp; \frac{2}{t-b} &amp; 0 &amp; -\frac{t+b}{t-b} \\
+0 &amp; 0 &amp; -\frac{2}{f-n} &amp; -\frac{f+n}{f-n} \\
+0 &amp; 0 &amp; 0 &amp; 1
+\end{bmatrix}
+</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">l, r</span> are the left and right
+bounds</li>
+<li><span class="math inline">b, t</span> are the bottom and top
+bounds</li>
+<li><span class="math inline">n, f</span> are the near and far
+planes</li>
+</ul>
+<p>This matrix defines the box of world space the shadow map can
+see.</p>
+<h3 id="why-the-box-size-matters">Why the box size matters</h3>
+<p>The shadow map has finite resolution. If the orthographic box is too
+large, each texel covers too much world space and the shadow gets
+blocky. If the box is too small, objects clip out of the shadow camera
+and disappear from the shadow map.</p>
+<p>The current setup uses:</p>
+<ul>
+<li><code>shadowMapSize = 512</code></li>
+<li><code>orthoSize = terrainWorldSize * 0.7f</code></li>
+</ul>
+<p>So the effective world-space shadow texel size is roughly:</p>
+<p><span class="math display">
+\Delta_{\mathrm{world}} \approx \frac{2 \cdot orthoSize}{shadowMapSize}
+</span></p>
+<p>That quantity is a useful mental model. It tells you how much
+world-space area one shadow texel represents.</p>
+<h2 id="pass-1-writing-the-shadow-map">4. Pass 1: Writing the Shadow
+Map</h2>
+<p>The depth pass is orchestrated from [src/main.cpp]:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> drawDepthPass<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>beginDepthPass<span class="op">();</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">maybe_unused</span><span class="op">]]</span> engine<span class="op">::</span>ScopedModelShader terrainDepth<span class="op">(</span>terrainModel<span class="op">,</span> depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">maybe_unused</span><span class="op">]]</span> engine<span class="op">::</span>ScopedModelShader fishDepth<span class="op">(*</span>fish<span class="op">,</span> depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    depth<span class="op">-&gt;</span>send<span class="op">(</span><span class="st">&quot;lightVP&quot;</span><span class="op">,</span> shadow<span class="op">.</span>lightVP<span class="op">);</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    DrawModel<span class="op">(</span>terrainModel<span class="op">,</span> ORIGIN<span class="op">.</span>v<span class="op">(),</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    Vector3 fishPos<span class="op">{</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        terrainMaxHeight <span class="op">+</span> <span class="fl">4.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span> <span class="op">+</span> <span class="fl">3.0</span><span class="bu">f</span><span class="op">};</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    DrawModelEx<span class="op">(*</span>fish<span class="op">,</span> fishPos<span class="op">,</span> UP<span class="op">.</span>v<span class="op">(),</span> total_time <span class="op">*</span> <span class="dv">80</span><span class="op">,</span> fishScale<span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>endDepthPass<span class="op">();</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The helper [src/engine/model_shader_scope.cpp] temporarily overrides
+every material shader in a model:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ScopedModelShader<span class="op">::</span>ScopedModelShader<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">,</span> <span class="at">const</span> <span class="op">::</span>Shader<span class="op">&amp;</span> shader<span class="op">)</span> <span class="op">:</span> <span class="va">m_model</span><span class="op">(&amp;</span>model<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_oldShaders</span><span class="op">.</span>resize<span class="op">(</span>model<span class="op">.</span>materialCount<span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> model<span class="op">.</span>materialCount<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_oldShaders</span><span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> model<span class="op">.</span>materials<span class="op">[</span>i<span class="op">].</span>shader<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        model<span class="op">.</span>materials<span class="op">[</span>i<span class="op">].</span>shader <span class="op">=</span> shader<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This keeps the depth pass isolated from the normal lighting shader
+without having to permanently mutate the model materials.</p>
+<h3 id="depth-pass-state">Depth pass state</h3>
+<p>The depth pass turns on three important GL-state changes in
+[src/engine/shadow.cpp]:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>BeginTextureMode<span class="op">(</span>map<span class="op">);</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ClearBackground<span class="op">(</span>WHITE<span class="op">);</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>rlDisableColorBlend<span class="op">();</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>rlEnableBackfaceCulling<span class="op">();</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>rlSetCullFace<span class="op">(</span>RL_CULL_FACE_FRONT<span class="op">);</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>BeginMode3D<span class="op">(</span>camera<span class="op">);</span></span></code></pre></div>
+<p>Why each one matters:</p>
+<ul>
+<li><code>BeginTextureMode(map)</code> renders into the shadow texture
+instead of the screen.</li>
+<li><code>ClearBackground(WHITE)</code> initializes the depth texture to
+far depth.</li>
+<li><code>rlDisableColorBlend()</code> prevents the packed RGBA depth
+from being blended with the clear color.</li>
+<li><code>rlSetCullFace(RL_CULL_FACE_FRONT)</code> reduces
+self-shadowing on closed meshes by storing the back side of the surface
+shell instead of the exact front face.</li>
+</ul>
+<h3 id="shadow-camera-view-transform">Shadow camera view transform</h3>
+<p>The light view matrix transforms a world point into the light's
+camera coordinates:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{view}}^{L} =
+M_{\mathrm{view}}^{L}\,\mathbf{p}_{\mathrm{world}}
+</span></p>
+<p>Geometrically, this is just a coordinate frame change. The light
+camera has:</p>
+<ul>
+<li>an origin at <code>lightPos</code></li>
+<li>a forward axis toward <code>target</code></li>
+<li>an up vector of <code>(0,1,0)</code></li>
+</ul>
+<p>This is the same idea as a player camera; the only difference is that
+the camera belongs to the light.</p>
+<h2 id="pass-1-what-gets-stored">5. Pass 1: What Gets Stored</h2>
+<p>The depth vertex shader is [assets/shaders/depth.vert]:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec3</span> vertexPosition<span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">float</span> fragDepth<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> lightVP<span class="op">;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> matModel<span class="op">;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">gl_Position</span> <span class="op">=</span> lightVP <span class="op">*</span> matModel <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    fragDepth <span class="op">=</span> <span class="bu">gl_Position</span><span class="op">.</span><span class="fu">z</span> <span class="op">/</span> <span class="bu">gl_Position</span><span class="op">.</span><span class="fu">w</span> <span class="op">*</span> <span class="fl">0.5</span> <span class="op">+</span> <span class="fl">0.5</span><span class="op">;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The fragment shader is [assets/shaders/depth.frag]:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">float</span> fragDepth<span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">vec4</span> finalColor<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="dt">vec4</span> <span class="fu">packDepth</span><span class="op">(</span><span class="dt">float</span> depth<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">const</span> <span class="dt">vec4</span> bitShift <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span><span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">const</span> <span class="dt">vec4</span> bitMask <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span><span class="fl">0.0</span><span class="op">,</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="fl">256.0</span><span class="op">);</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> <span class="dt">packed</span> <span class="op">=</span> <span class="bu">fract</span><span class="op">(</span>depth <span class="op">*</span> bitShift<span class="op">);</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">packed</span> <span class="op">-=</span> <span class="dt">packed</span><span class="op">.</span><span class="fu">xxyz</span> <span class="op">*</span> bitMask<span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="dt">packed</span><span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> depth <span class="op">=</span> <span class="bu">clamp</span><span class="op">(</span>fragDepth<span class="op">,</span> <span class="fl">0.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    finalColor <span class="op">=</span> <span class="fu">packDepth</span><span class="op">(</span>depth<span class="op">);</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="why-fragdepth-is-normalized">Why <code>fragDepth</code> is
+normalized</h3>
+<p>The clip-space <code>z</code> value is first divided by
+<code>w</code>:</p>
+<p><span class="math display">
+z_{\mathrm{ndc}} = \frac{z_{\mathrm{clip}}}{w_{\mathrm{clip}}}
+</span></p>
+<p>Then remapped into texture depth space:</p>
+<p><span class="math display">
+z_{\mathrm{depth}} = \frac{z_{\mathrm{ndc}}}{2} + \frac{1}{2}
+</span></p>
+<p>This is necessary because the stored value must live in the same
+normalized range as the shadow lookup in the lighting shader.</p>
+<h3 id="why-pack-depth-into-rgba">Why pack depth into RGBA</h3>
+<p>The shadow texture is a color render texture, not a hardware depth
+texture. A single 8-bit channel is usually too coarse. Packing into four
+channels gives much better precision.</p>
+<p>The packing is base-256 positional encoding. If we think of the
+normalized depth as a fixed-point value:</p>
+<p><span class="math display">
+d \in [0,1]
+</span></p>
+<p>then packing converts it into four byte-sized digits. In abstract
+terms:</p>
+<p><span class="math display">
+d \mapsto (d_0, d_1, d_2, d_3)
+</span></p>
+<p>where each <span class="math inline">d_i</span> occupies one 8-bit
+channel.</p>
+<p>The unpacking is the reverse linear combination:</p>
+<p><span class="math display">
+d = \sum_{i=0}^{3} d_i\,b_i
+</span></p>
+<p>with weights:</p>
+<p><span class="math display">
+b = \left(\frac{1}{256^3}, \frac{1}{256^2}, \frac{1}{256}, 1\right)
+</span></p>
+<p>In the lighting shader:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> <span class="fu">unpackDepth</span><span class="op">(</span><span class="dt">vec4</span> <span class="dt">packed</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">const</span> <span class="dt">vec4</span> bitShift <span class="op">=</span> <span class="dt">vec4</span><span class="op">(</span><span class="fl">1.0</span> <span class="op">/</span> <span class="op">(</span><span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span><span class="op">),</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="op">(</span><span class="fl">256.0</span> <span class="op">*</span> <span class="fl">256.0</span><span class="op">),</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="fl">256.0</span><span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> <span class="bu">dot</span><span class="op">(</span><span class="dt">packed</span><span class="op">,</span> bitShift<span class="op">);</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h2 id="pass-2-lighting-and-shadow-lookup">6. Pass 2: Lighting and
+Shadow Lookup</h2>
+<p>The lit vertex shader is [assets/shaders/lambert.vert]:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec3</span> vertexPosition<span class="op">;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec2</span> vertexTexCoord<span class="op">;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="dt">in</span> <span class="dt">vec3</span> vertexNormal<span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">vec2</span> fragTexCoord<span class="op">;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">vec3</span> fragNormal<span class="op">;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">vec3</span> fragPosition<span class="op">;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="dt">out</span> <span class="dt">vec4</span> fragLightSpacePos<span class="op">;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> mvp<span class="op">;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> matModel<span class="op">;</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> matNormal<span class="op">;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">mat4</span> lightVP<span class="op">;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">main</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    fragTexCoord <span class="op">=</span> vertexTexCoord<span class="op">;</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    fragNormal <span class="op">=</span> <span class="bu">normalize</span><span class="op">(</span><span class="dt">mat3</span><span class="op">(</span>matNormal<span class="op">)</span> <span class="op">*</span> vertexNormal<span class="op">);</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    fragPosition <span class="op">=</span> <span class="op">(</span>matModel <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">)).</span><span class="fu">xyz</span><span class="op">;</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    fragLightSpacePos <span class="op">=</span> lightVP <span class="op">*</span> matModel <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">gl_Position</span> <span class="op">=</span> mvp <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The important outputs are:</p>
+<ul>
+<li><code>fragPosition</code>, the world-space position</li>
+<li><code>fragNormal</code>, the world-space normal</li>
+<li><code>fragLightSpacePos</code>, which is currently redundant but
+still emitted</li>
+</ul>
+<p>The fragment shader does the actual comparison.</p>
+<h3 id="world-space-receiver-bias">World-space receiver bias</h3>
+<p>The current lighting shader offsets the receiver position along its
+normal before projecting into light space:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> biasedWorldPos <span class="op">=</span> worldPos <span class="op">+</span> normal <span class="op">*</span> <span class="fl">0.18</span><span class="op">;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="dt">vec4</span> lightSpacePos <span class="op">=</span> lightVP <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>biasedWorldPos<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span></code></pre></div>
+<p>This is a normal-offset bias. It shifts the receiver slightly away
+from the surface so the comparison is not made exactly on the geometric
+boundary.</p>
+<p>Geometrically, this means the test point is:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{biased}} = \mathbf{p}_{\mathrm{world}} + \alpha
+\mathbf{n}
+</span></p>
+<p>where <span class="math inline">\alpha = 0.18</span> in the current
+shader.</p>
+<p>That is different from depth bias. Depth bias changes the comparison
+threshold. Normal bias changes the point being projected.</p>
+<h3 id="ndotl-and-slope-scaled-bias">NdotL and slope-scaled bias</h3>
+<p>The shader computes:</p>
+<p><span class="math display">
+N \cdot L = \max(\hat{\mathbf{n}} \cdot \hat{\mathbf{l}}, 0)
+</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\hat{\mathbf{n}}</span> is the normalized
+normal</li>
+<li><span class="math inline">\hat{\mathbf{l}}</span> is the normalized
+light direction</li>
+</ul>
+<p>Then it derives a slope term:</p>
+<p><span class="math display">
+s = \frac{\sqrt{\max(1 - (N \cdot L)^2, 0)}}{\max(N \cdot L, 0.1)}
+</span></p>
+<p>This quantity grows rapidly as the surface becomes more parallel to
+the light direction. That is exactly where shadow acne is worst.</p>
+<p>The current bias is:</p>
+<p><span class="math display">
+\beta = \max(0.003 + 0.01\,s, 0.0015)
+</span></p>
+<p>So the final comparison becomes:</p>
+<p><span class="math display">
+z_{\mathrm{current}} - \beta &gt; z_{\mathrm{stored}}
+</span></p>
+<p>This is the core acne suppression mechanism in the current build.</p>
+<h2 id="percentage-closer-filtering">7. Percentage-Closer Filtering</h2>
+<p>Raw shadow comparisons produce hard aliasing. The repo uses a 3x3 PCF
+kernel:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">vec2</span> texelSize <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="dt">vec2</span><span class="op">(</span><span class="bu">textureSize</span><span class="op">(</span>shadowMap<span class="op">,</span> <span class="dv">0</span><span class="op">));</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> visibility <span class="op">=</span> <span class="fl">0.0</span><span class="op">;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="op">(</span><span class="dt">int</span> y <span class="op">=</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span> y <span class="op">&lt;=</span> <span class="dv">1</span><span class="op">;</span> y<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="op">(</span><span class="dt">int</span> x <span class="op">=</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span> x <span class="op">&lt;=</span> <span class="dv">1</span><span class="op">;</span> x<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> closest <span class="op">=</span> <span class="fu">unpackDepth</span><span class="op">(</span><span class="bu">texture</span><span class="op">(</span>shadowMap<span class="op">,</span> shadowUv <span class="op">+</span> <span class="dt">vec2</span><span class="op">(</span>x<span class="op">,</span> y<span class="op">)</span> <span class="op">*</span> texelSize<span class="op">));</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        visibility <span class="op">+=</span> <span class="op">(</span>proj<span class="op">.</span><span class="fu">z</span> <span class="op">-</span> bias <span class="op">&gt;</span> closest<span class="op">)</span> <span class="op">?</span> <span class="fl">0.35</span> <span class="op">:</span> <span class="fl">1.0</span><span class="op">;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="kw">return</span> visibility <span class="op">/</span> <span class="fl">9.0</span><span class="op">;</span></span></code></pre></div>
+<p>Mathematically, PCF is a local average of binary visibility
+tests:</p>
+<p><span class="math display">
+V(\mathbf{u}) = \frac{1}{9} \sum_{i=-1}^{1} \sum_{j=-1}^{1} v(\mathbf{u}
++ (i,j)\Delta)
+</span></p>
+<p>where:</p>
+<p><span class="math display">
+v(\mathbf{u}) =
+\begin{cases}
+1.0 &amp; \mathrm{if\ lit} \\
+0.35 &amp; \mathrm{if\ shadowed}
+\end{cases}
+</span></p>
+<p>The value <code>0.35</code> is not physically special. It is an
+artistic choice that keeps fully shadowed areas from going completely
+black.</p>
+<h2 id="why-the-shadow-test-must-match-the-depth-pass">8. Why the Shadow
+Test Must Match the Depth Pass</h2>
+<p>The depth pass and the main pass have to agree on all of these:</p>
+<ol type="1">
+<li>the light transform</li>
+<li>the light projection bounds</li>
+<li>the depth normalization</li>
+<li>the storage format</li>
+<li>the comparison bias</li>
+</ol>
+<p>If any one of those differs, then the inequality is comparing values
+from different coordinate systems.</p>
+<p>The failure mode looks like this:</p>
+<p><span class="math display">
+\mathbf{p}_{\mathrm{current}}^{L,pass2} \neq
+\mathbf{p}_{\mathrm{stored}}^{L,pass1}
+</span></p>
+<p>Even a small mismatch can make the whole scene appear shadowed or
+unshadowed.</p>
+<h2 id="raylib-material-binding">9. Raylib Material Binding</h2>
+<p>The shadow map is bound through raylib's material texture
+machinery.</p>
+<p>In [src/engine/shader.cpp]:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Shader<span class="op">::</span>bindLocation<span class="op">(</span><span class="dt">int</span> locIndex<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">*</span> name<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_shader</span><span class="op">.</span>locs<span class="op">[</span>locIndex<span class="op">]</span> <span class="op">=</span> getLocation<span class="op">(</span>name<span class="op">);</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In [src/main.cpp]:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>lambert<span class="op">-&gt;</span>bindLocation<span class="op">(</span>SHADER_LOC_MAP_METALNESS<span class="op">,</span> <span class="st">&quot;shadowMap&quot;</span><span class="op">);</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>terrainModel<span class="op">.</span>materials<span class="op">[</span><span class="dv">0</span><span class="op">].</span>maps<span class="op">[</span>MATERIAL_MAP_METALNESS<span class="op">].</span>texture <span class="op">=</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>fish<span class="op">-&gt;</span>materials<span class="op">[</span>i<span class="op">].</span>maps<span class="op">[</span>MATERIAL_MAP_METALNESS<span class="op">].</span>texture <span class="op">=</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">;</span></span></code></pre></div>
+<p>This is a raylib-specific bridge. The engine tells raylib, "when you
+bind the metalness slot, route that to the custom <code>shadowMap</code>
+sampler in the shader."</p>
+<p>The important consequence is that the shadow texture is bound through
+model/material drawing, not via a separate manual sampler path.</p>
+<h2 id="why-the-scene-uses-a-small-main-render-texture">10. Why the
+Scene Uses a Small Main Render Texture</h2>
+<p>The main scene is rendered to a lower-resolution canvas:</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> gameRenderWidth <span class="op">=</span> <span class="dv">480</span><span class="op">;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> gameRenderHeight <span class="op">=</span> <span class="dv">270</span><span class="op">;</span></span></code></pre></div>
+<p>The final image is then scaled up to the window.</p>
+<p>This does not change the shadow math, but it does affect perception.
+Lower internal resolution makes shadow edges look more stylized and less
+expensive to compute, which fits the intended pixelated style.</p>
+<h2 id="what-each-piece-does">11. What Each Piece Does</h2>
+<h3 id="srcengineshadow."><code>src/engine/shadow.*</code></h3>
+<p>Owns the shadow render target and the light camera state.</p>
+<ul>
+<li>creates the shadow texture</li>
+<li>sets filtering and wrapping</li>
+<li>computes <code>lightVP</code></li>
+<li>manages render-state changes for the shadow pass</li>
+</ul>
+<h3
+id="srcenginemodel_shader_scope."><code>src/engine/model_shader_scope.*</code></h3>
+<p>Temporarily replaces a model's material shaders with the depth
+shader, then restores them automatically.</p>
+<p>This is a local cleanup layer over a raylib limitation: model
+materials are stateful, but the depth pass wants a different shader than
+the lit pass.</p>
+<h3 id="assetsshadersdepth."><code>assets/shaders/depth.*</code></h3>
+<p>Writes normalized light-space depth into the shadow texture.</p>
+<h3
+id="assetsshaderslambert."><code>assets/shaders/lambert.*</code></h3>
+<p>Performs lighting, shadow lookup, PCF, and biasing.</p>
+<h3 id="srcmain.cpp"><code>src/main.cpp</code></h3>
+<p>Orchestrates:</p>
+<ul>
+<li>terrain generation</li>
+<li>camera control</li>
+<li>depth pass</li>
+<li>main pass</li>
+<li>presentation to the screen</li>
+</ul>
+<h2 id="the-full-math-in-one-line">12. The Full Math in One Line</h2>
+<p>If we compress the whole shadow test into one expression, it is
+this:</p>
+<p><span class="math display">
+\mathrm{shadowed}(\mathbf{p}) =
+\left[
+\frac{(M_{\mathrm{lightVP}}\,[\mathbf{p} + \alpha \mathbf{n}], 1)_z}
+{(M_{\mathrm{lightVP}}\,[\mathbf{p} + \alpha \mathbf{n}], 1)_w}
+\cdot \frac{1}{2} + \frac{1}{2}
+- \beta
+&gt;
+\mathrm{shadowMap}\left(
+\frac{(M_{\mathrm{lightVP}}\,[\mathbf{p} + \alpha \mathbf{n}], 1)_{xy}}
+{(M_{\mathrm{lightVP}}\,[\mathbf{p} + \alpha \mathbf{n}], 1)_w}
+\cdot \frac{1}{2} + \frac{1}{2}
+\right)
+\right]
+</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\alpha</span> is the normal offset</li>
+<li><span class="math inline">\beta</span> is the slope-scaled bias</li>
+<li>the shadow map lookup is filtered with a 3x3 PCF kernel</li>
+</ul>
+<p>That is the entire algorithm.</p>
+<h2 id="practical-failure-modes">13. Practical Failure Modes</h2>
+<p>When shadow mapping breaks, the failure usually falls into one of
+these buckets:</p>
+<h3 id="a.-light-space-mismatch">A. Light-space mismatch</h3>
+<p>The depth pass and the lighting pass are not using the same
+<code>lightVP</code>.</p>
+<h3 id="b.-bad-depth-storage">B. Bad depth storage</h3>
+<p>The shadow map is too low precision or gets blended/corrupted.</p>
+<h3 id="c.-bad-projection-bounds">C. Bad projection bounds</h3>
+<p>The orthographic box is too large or too small.</p>
+<h3 id="d.-bias-too-low">D. Bias too low</h3>
+<p>You get acne and stripes.</p>
+<h3 id="e.-bias-too-high">E. Bias too high</h3>
+<p>You get detached shadows.</p>
+<h3 id="f.-sampling-outside-the-map">F. Sampling outside the map</h3>
+<p>UVs fall outside <code>[0,1]</code>, so the fragment samples cleared
+texels.</p>
+<h3 id="g.-too-little-filtering">G. Too little filtering</h3>
+<p>Edges alias and crawl.</p>
+<p>This repo currently mitigates those with:</p>
+<ul>
+<li>packed RGBA depth</li>
+<li>front-face culling in the depth pass</li>
+<li>normal offset bias</li>
+<li>slope-scaled comparison bias</li>
+<li>3x3 PCF</li>
+<li>a relatively small 512x512 shadow map for the pixelated style</li>
+</ul>
+<h2 id="current-shadow-parameters">14. Current Shadow Parameters</h2>
+<p>From [src/main.cpp]:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> shadowMapSize <span class="op">=</span> <span class="dv">512</span><span class="op">;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> Vector3 sunDirection<span class="op">{-</span><span class="fl">0.4</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.6</span><span class="bu">f</span><span class="op">};</span></span></code></pre></div>
+<p>From [src/engine/shadow.cpp]:</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>Matrix lightProj <span class="op">=</span> MatrixOrtho<span class="op">(-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="op">-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="fl">0.1</span><span class="bu">f</span><span class="op">,</span> <span class="fl">200.0</span><span class="bu">f</span><span class="op">);</span></span></code></pre></div>
+<p>From [assets/shaders/lambert.frag]:</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> biasedWorldPos <span class="op">=</span> worldPos <span class="op">+</span> normal <span class="op">*</span> <span class="fl">0.18</span><span class="op">;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> bias <span class="op">=</span> <span class="bu">max</span><span class="op">(</span><span class="fl">0.003</span> <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> slope<span class="op">,</span> <span class="fl">0.0015</span><span class="op">);</span></span></code></pre></div>
+<p>These are the numbers that currently define the visual character of
+the shadows.</p>
+<h2 id="one-small-note">15. One Small Note</h2>
+<p><code>fragLightSpacePos</code> is still written in
+[assets/shaders/lambert.vert], but the current fragment shader
+recomputes the biased light-space position from
+<code>fragPosition</code>, <code>fragNormal</code>, and
+<code>lightVP</code>. That is deliberate in the current implementation
+because the receiver bias is applied in world space before
+projection.</p>
+<p>That means the vertex output is slightly more general than the
+current fragment path needs.</p>
+<h2 id="bottom-line">16. Bottom Line</h2>
+<p>Shadow mapping here is a comparison between two projections of the
+same world point:</p>
+<ul>
+<li>one projection from the light</li>
+<li>one projection from the camera</li>
+</ul>
+<p>If those projections match, the comparison is meaningful:</p>
+<p><span class="math display">
+z_{\mathrm{current}} - \beta &gt; z_{\mathrm{stored}}
+</span></p>
+<p>If they do not match, the shadow is wrong.</p>
+<p>The rest of the code is just machinery for making that comparison
+stable enough to survive real geometry, finite precision, and a
+deliberately low-resolution presentation style.</p>
+</body>
+</html>
