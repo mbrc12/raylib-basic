@@ -85,6 +85,11 @@ void Shader::send(const char* name, const Texture2D& texture)  {
 
 void Shader::send(const char* name, const Matrix& mat)  { SetShaderValueMatrix(m_shader, getLocation(name), mat); }
 
+void Shader::send(const char* name, const Color& color) {
+    float v[4] = {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f};
+    SetShaderValue(m_shader, getLocation(name), v, SHADER_UNIFORM_VEC4);
+}
+
 bool Shader::valid() { return IsShaderValid(m_shader); }
 
 int Shader::getLocation(const char* name)  { return GetShaderLocation(m_shader, name); }

@@ -1,5 +1,7 @@
 #include "raylib.h"
+#include "colors.hpp"
 
+#include "engine/util.hpp"
 #include "engine/assets.hpp"
 #include "engine/mainloop.hpp"
 #ifndef PROJECT_WINDOW_TITLE
@@ -7,58 +9,62 @@
 #endif
 
 namespace {
-constexpr int kScreenWidth = 960;
-constexpr int kScreenHeight = 540;
+constexpr int screenWidth = 960;
+constexpr int screenHeight = 540;
 
-RenderTexture2D gTarget{};
-engine::Resource<engine::Shader> gShader;
-float gTime = 0.0f;
+RenderTexture2D canvas{};
+engine::Resource<engine::Shader> effect;
+float total_time = 0.0f;
 
 void InitializeScene() {
-    gTarget = LoadRenderTexture(kScreenWidth, kScreenHeight);
-    gShader = engine::assets::shader("effect");
+    canvas = LoadRenderTexture(screenWidth, screenHeight);
+    effect = engine::assets::shader("effect");
 
-    TraceLog(LOG_INFO, "APP: Render texture valid: %s", IsRenderTextureValid(gTarget) ? "yes" : "no");
-    TraceLog(LOG_INFO, "APP: Shader valid: %s", gShader->valid() ? "yes" : "no");
+    dbg("APP: Render texture valid: %s", IsRenderTextureValid(canvas) ? "yes" : "no");
+    dbg("APP: Shader valid: %s", effect->valid() ? "yes" : "no");
 }
 
-void DrawFrame() {
+void Update(float dt) {}
 
-    gTime += GetFrameTime();
-
-    BeginTextureMode(gTarget);
-    ClearBackground(Color{16, 22, 30, 255});
-    DrawCircleGradient(Vector2{kScreenWidth / 2.0f, kScreenHeight / 2.0f}, 220, Color{255, 116, 82, 255},
-                       Color{25, 78, 132, 255});
-    DrawRectangle(90, 250, 780, 12, Color{240, 238, 220, 255});
-    DrawText("ES 3.0 shader path", 96, 180, 42, RAYWHITE);
-    DrawText("uses #version 300 es + texelFetch()", 100, 235, 24, Color{180, 232, 255, 255});
+void Draw() {
+    BeginTextureMode(canvas);
+    ClearBackground(colors::SteamLords_MidnightBlack);
+    DrawRectangle(90, 250, 780, 12, colors::SteamLords_IndigoBerry);
     EndTextureMode();
 
-    gShader->send("resolution", Vector2{static_cast<float>(kScreenWidth), static_cast<float>(kScreenHeight)});
-    gShader->send("time", gTime);
+    effect->send("resolution", Vector2{static_cast<float>(screenWidth), static_cast<float>(screenHeight)});
+    effect->send("time", total_time);
+    effect->send("colorA", colors::SteamLords_DeepFern);
+    effect->send("colorB", colors::SteamLords_EggplantPurple);
 
     BeginDrawing();
     ClearBackground(Color{18, 24, 31, 255});
-    gShader->enable();
+    effect->enable();
     DrawTextureRec(
-        gTarget.texture,
-        Rectangle{0.0f, 0.0f, static_cast<float>(gTarget.texture.width), static_cast<float>(-gTarget.texture.height)},
-        Vector2{0.0f, 0.0f}, WHITE);
-    gShader->disable();
+        canvas.texture,
+        Rectangle{0.0f, 0.0f, static_cast<float>(canvas.texture.width), static_cast<float>(-canvas.texture.height)},
+        Vector2{0.0f, 0.0f}, colors::PureWhite);
+    effect->disable();
     DrawFPS(12, 12);
     EndDrawing();
+}
+
+void Frame() {
+    float dt = GetFrameTime();
+    total_time += GetFrameTime();
+    Update(dt);
+    Draw();
 }
 } // namespace
 
 int main() {
-    InitWindow(kScreenWidth, kScreenHeight, PROJECT_WINDOW_TITLE);
+    InitWindow(screenWidth, screenHeight, PROJECT_WINDOW_TITLE);
     SetTargetFPS(60);
     InitializeScene();
 
-    runMainLoop(DrawFrame);
+    runMainLoop(Frame);
 
-    gTarget = {};
+    UnloadRenderTexture(canvas);
     CloseWindow();
 
     return 0;

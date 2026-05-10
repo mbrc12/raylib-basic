@@ -30,6 +30,7 @@ class Shader {
     void send(const char* name, const Vector3* values, int count);
     void send(const char* name, const Texture2D& texture);
     void send(const char* name, const Matrix& mat);
+    void send(const char* name, const Color& color);
 
     bool valid();
 

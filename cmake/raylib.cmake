@@ -116,12 +116,15 @@ function(_setup_raylib_native)
 endfunction()
 
 function(raylib_assets_target)
-    add_custom_command(TARGET ${GAME_NAME} POST_BUILD
+    file(GLOB_RECURSE PROJECT_ASSET_FILES "${PROJECT_ASSETS_DIR}/*")
+    add_custom_target(copy_assets ALL
         COMMAND "${CMAKE_COMMAND}" -E remove_directory
                 "$<TARGET_FILE_DIR:${GAME_NAME}>/assets"
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
                 "${PROJECT_ASSETS_DIR}"
                 "$<TARGET_FILE_DIR:${GAME_NAME}>/assets"
         ${ARGN}
+        DEPENDS ${PROJECT_ASSET_FILES}
     )
+    add_dependencies(${GAME_NAME} copy_assets)
 endfunction()
