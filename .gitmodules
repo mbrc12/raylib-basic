@@ -1,0 +1,6 @@
+[submodule "deps/tomlplusplus"]
+	path = deps/tomlplusplus
+	url = https://github.com/marzer/tomlplusplus
+[submodule "deps/backward-cpp"]
+	path = deps/backward-cpp
+	url = https://github.com/bombela/backward-cpp

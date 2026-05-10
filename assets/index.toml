@@ -1,0 +1,7 @@
+[shaders]
+effect = { vert = "shaders/effect.vert", frag = "shaders/effect.frag" }
+
+[textures]
+
+[fonts]
+main = "fonts/capital-hill.ttf"

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@GAME_NAME@</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #10161e;
+        color: #e8edf2;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      main {
+        display: grid;
+        gap: 12px;
+      }
+
+      canvas {
+        width: 960px;
+        height: 540px;
+        max-width: 100vw;
+        max-height: 100vh;
+        background: #000;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        outline: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      #status {
+        min-height: 1.4em;
+        color: #a9bac8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+      <div id="status">Downloading...</div>
+    </main>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const status = document.getElementById("status");
+
+      function logWebGLDebug() {
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+        if (!gl) {
+          console.warn("WebGL debug: no WebGL context is available");
+          return;
+        }
+
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        const renderer = debugInfo
+          ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          : gl.getParameter(gl.RENDERER);
+        const vendor = debugInfo
+          ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+          : gl.getParameter(gl.VENDOR);
+
+        console.log("WebGL debug: version =", gl.getParameter(gl.VERSION));
+        console.log("WebGL debug: shading language =", gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
+        console.log("WebGL debug: vendor =", vendor);
+        console.log("WebGL debug: renderer =", renderer);
+      }
+
+      canvas.addEventListener("webglcontextlost", (event) => {
+        event.preventDefault();
+        status.textContent = "WebGL context lost. Reload the page.";
+      });
+
+      var Module = {
+        canvas,
+        print: (...args) => console.log(...args),
+        printErr: (...args) => console.error(...args),
+        setStatus: (text) => {
+          status.textContent = text || "";
+        },
+        monitorRunDependencies: (remaining) => {
+          if (remaining > 0) {
+            status.textContent = `Preparing... ${remaining}`;
+          }
+        },
+        postRun: [logWebGLDebug],
+      };
+
+      window.onerror = () => {
+        status.textContent = "Exception thrown, see JavaScript console";
+      };
+    </script>
+
+    {{{ SCRIPT }}}
+  </body>
+</html>

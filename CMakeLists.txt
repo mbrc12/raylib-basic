@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.25)
+
+project(game LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(GAME_NAME "game" CACHE STRING "Executable basename, web output basename, and window title.")
+set(RAYLIB_ARTIFACTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ext/raylib/dist" CACHE PATH "Path to the external raylib artifact dist directory.")
+set(GRAPHICS "angle" CACHE STRING "Graphics backend on macOS: angle or opengl")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(raylib)
+
+set(PROJECT_ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(PROJECT_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/bin")
+
+add_subdirectory(deps/tomlplusplus)
+if(NOT EMSCRIPTEN)
+    add_subdirectory(deps/backward-cpp)
+endif()
+
+add_executable(${GAME_NAME}
+    src/main.cpp
+    src/engine/assets.cpp
+    src/engine/mainloop.cpp
+    src/engine/shader.cpp
+)
+target_compile_definitions(${GAME_NAME} PRIVATE PROJECT_WINDOW_TITLE="${GAME_NAME}")
+target_include_directories(${GAME_NAME} PRIVATE src)
+target_link_libraries(${GAME_NAME} PRIVATE
+    tomlplusplus::tomlplusplus
+)
+if(NOT EMSCRIPTEN)
+    target_link_libraries(${GAME_NAME} PRIVATE Backward::Object)
+endif()
+
+setup_raylib_target()
