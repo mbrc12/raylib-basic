@@ -2,7 +2,6 @@
 
 #include "engine/assets.hpp"
 #include "engine/mainloop.hpp"
-
 #ifndef PROJECT_WINDOW_TITLE
 #define PROJECT_WINDOW_TITLE "game"
 #endif
@@ -12,17 +11,19 @@ constexpr int kScreenWidth = 960;
 constexpr int kScreenHeight = 540;
 
 RenderTexture2D gTarget{};
-engine::Resource<engine::Shader> gShader = engine::assets::shader("effect");
+engine::Resource<engine::Shader> gShader;
 float gTime = 0.0f;
 
 void InitializeScene() {
     gTarget = LoadRenderTexture(kScreenWidth, kScreenHeight);
+    gShader = engine::assets::shader("effect");
 
     TraceLog(LOG_INFO, "APP: Render texture valid: %s", IsRenderTextureValid(gTarget) ? "yes" : "no");
     TraceLog(LOG_INFO, "APP: Shader valid: %s", gShader->valid() ? "yes" : "no");
 }
 
 void DrawFrame() {
+
     gTime += GetFrameTime();
 
     BeginTextureMode(gTarget);
