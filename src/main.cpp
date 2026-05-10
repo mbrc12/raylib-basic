@@ -1,12 +1,5 @@
 #include "raylib.h"
 
-#ifdef __APPLE__
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
-
 #include "colors.hpp"
 
 #include "engine/util.hpp"
@@ -19,13 +12,43 @@
 namespace {
 constexpr int screenWidth = 960;
 constexpr int screenHeight = 540;
+constexpr int terrainTexSize = 256;
+constexpr float terrainWorldSize = 200.0f;
+constexpr float terrainMaxHeight = 12.0f;
 
 RenderTexture2D canvas{};
 engine::Shader* effect = nullptr;
 engine::Shader* lambert = nullptr;
 Model* fish = nullptr;
+Model terrainModel{};
+Texture2D terrainTex{};
 Camera3D camera{};
 float total_time = 0.0f;
+
+Model GenerateTerrain() {
+    Image img = GenImageColor(terrainTexSize, terrainTexSize, BLACK);
+
+    SetRandomSeed(42);
+
+    for (int y = 0; y < terrainTexSize; y++) {
+        for (int x = 0; x < terrainTexSize; x++) {
+            unsigned char g = (unsigned char)(GetRandomValue(80, 180));
+            unsigned char r = (unsigned char)(g / 4 + GetRandomValue(0, 30));
+            unsigned char b = (unsigned char)(g / 5 + GetRandomValue(0, 20));
+            ImageDrawPixel(&img, x, y, Color{r, g, b, 255});
+        }
+    }
+
+    Mesh mesh = GenMeshHeightmap(img, Vector3{terrainWorldSize, terrainMaxHeight, terrainWorldSize});
+    terrainTex = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    Model model = LoadModelFromMesh(mesh);
+    model.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = terrainTex;
+    model.materials[0].shader = lambert->raw();
+
+    return model;
+}
 
 void InitializeScene() {
     canvas = LoadRenderTexture(screenWidth, screenHeight);
@@ -33,35 +56,52 @@ void InitializeScene() {
     lambert = engine::assets::shader("lambert");
     fish = engine::assets::model("fish");
 
+    terrainModel = GenerateTerrain();
+
     for (int i = 0; i < fish->materialCount; i++) {
         fish->materials[i].shader = lambert->raw();
     }
 
-    camera.position = Vector3{0.0f, 10.0f, 10.0f};
-    camera.target = Vector3{0.0f, 0.0f, 0.0f};
+    float halfWorld = terrainWorldSize / 2.0f;
+    camera.position = Vector3{halfWorld, terrainMaxHeight * 0.4f + 2.0f, halfWorld};
+    camera.target = Vector3{halfWorld, terrainMaxHeight * 0.4f, halfWorld - 1.0f};
     camera.up = Vector3{0.0f, 1.0f, 0.0f};
-    camera.fovy = 60.0f;
+    camera.fovy = 65.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+
+    DisableCursor();
 
     dbg("APP: Render texture valid: %s", IsRenderTextureValid(canvas) ? "yes" : "no");
     dbg("APP: Effect shader valid: %s", effect->valid() ? "yes" : "no");
     dbg("APP: Lambert shader valid: %s", lambert->valid() ? "yes" : "no");
     dbg("APP: Model valid: %s", fish ? "yes" : "no");
 
-    lambert->send("ambient", Color{30, 30, 40, 255});
-    lambert->send("diffuse", Color{220, 200, 180, 255});
+    lambert->send("ambient", Color{60, 70, 90, 255});
+    lambert->send("diffuse", Color{255, 245, 230, 255});
 }
 
-void Update(float dt) {}
+void Update(float dt) {
+    UpdateCamera(&camera, CAMERA_FREE);
+}
 
 void Draw() {
     BeginTextureMode(canvas);
-    ClearBackground(colors::SteamLords_MidnightBlack);
+    ClearBackground(colors::SteamLords_SteelBlue);
 
     BeginMode3D(camera);
-    lambert->send("lightDir", Vector3{-0.5f, 1.0f, 0.8f});
-    DrawModelEx(*fish, ORIGIN, UP, total_time * 360, {0.5, 0.5, 0.5}, colors::PureWhite);
-    DrawGrid(10, 1.0f);
+    lambert->send("lightDir", Vector3{-0.4f, 1.0f, 0.6f});
+    lambert->send("viewPos", camera.position);
+    lambert->send("fogColor", colors::SteamLords_SteelBlue);
+    lambert->send("fogDensity", 0.1f);
+
+    DrawModel(terrainModel, ORIGIN, 1.0f, WHITE);
+
+    Vector3 fishPos{
+        terrainWorldSize / 2.0f,
+        terrainMaxHeight + 4.0f,
+        terrainWorldSize / 2.0f + 3.0f};
+    DrawModelEx(*fish, fishPos, UP, total_time * 80, {0.4, 0.4, 0.4}, colors::PureWhite);
+
     EndMode3D();
 
     EndTextureMode();
@@ -79,7 +119,7 @@ void Draw() {
 
 void Frame() {
     float dt = GetFrameTime();
-    total_time += GetFrameTime();
+    total_time += dt;
     Update(dt);
     Draw();
 }
@@ -92,6 +132,9 @@ int main() {
 
     runMainLoop(Frame);
 
+    EnableCursor();
+    UnloadTexture(terrainTex);
+    UnloadModel(terrainModel);
     UnloadRenderTexture(canvas);
     engine::assets::manual_unload();
     CloseWindow();
