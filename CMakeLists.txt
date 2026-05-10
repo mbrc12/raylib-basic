@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(GAME_NAME "game" CACHE STRING "Executable basename, web output basename, and window title.")
 set(RAYLIB_ARTIFACTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../ext/raylib/dist" CACHE PATH "Path to the external raylib artifact dist directory.")
-set(GRAPHICS "angle" CACHE STRING "Graphics backend on macOS: angle or opengl")
+set(GRAPHICS "sdl3-angle" CACHE STRING "Graphics backend on macOS: angle, sdl3-angle, or opengl")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(raylib)
@@ -26,6 +26,7 @@ add_executable(${GAME_NAME}
     src/main.cpp
     src/engine/assets.cpp
     src/engine/free_camera.cpp
+    src/engine/input.cpp
     src/engine/mainloop.cpp
     src/engine/model_shader_scope.cpp
     src/engine/shader.cpp

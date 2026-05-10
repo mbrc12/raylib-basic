@@ -14,8 +14,8 @@ Shader* shader(const char* name);
 Texture2D* texture(const char* name);
 Font* font(const char* name);
 Model* model(const char* name);
+std::string text(const char* name);
 
 Image image(const char* name);
-std::string readFile(const char* path);
 
 } // namespace engine::assets

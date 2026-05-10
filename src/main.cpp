@@ -4,6 +4,7 @@
 
 #include "engine/util.hpp"
 #include "engine/assets.hpp"
+#include "engine/input.hpp"
 #include "engine/free_camera.hpp"
 #include "engine/model_shader_scope.hpp"
 #include "engine/shadow.hpp"
@@ -12,10 +13,11 @@
 #define PROJECT_WINDOW_TITLE "game"
 #endif
 
-constexpr int screenWidth = 960;
-constexpr int screenHeight = 540;
 constexpr int gameRenderWidth = 480;
 constexpr int gameRenderHeight = 270;
+constexpr int gameScale = 3;
+constexpr int screenWidth = gameRenderWidth * gameScale;
+constexpr int screenHeight = gameRenderHeight * gameScale;
 constexpr int terrainTexSize = 256;
 constexpr float terrainWorldSize = 200.0f;
 constexpr float terrainMaxHeight = 12.0f;
@@ -26,6 +28,7 @@ constexpr Vector3 sunDirection{-0.4f, 1.0f, 0.6f};
 RenderTexture2D canvas{};
 engine::Shader* lambert = nullptr;
 engine::Shader* depth = nullptr;
+Font* uiFont = nullptr;
 Model* fish = nullptr;
 Model terrainModel{};
 Texture2D terrainTex{};
@@ -35,6 +38,7 @@ engine::FreeCameraController cameraController{};
 float total_time = 0.0f;
 int screenshotIndex = 0;
 bool captureScreenshot = false;
+bool clearStartupTopmost = false;
 
 Model GenerateTerrain() {
     Image img = GenImageColor(terrainTexSize, terrainTexSize, BLACK);
@@ -67,6 +71,10 @@ void InitializeScene() {
     SetTextureFilter(canvas.texture, TEXTURE_FILTER_POINT);
     lambert = engine::assets::shader("lambert");
     depth = engine::assets::shader("depth");
+    uiFont = engine::assets::font("main");
+    if (uiFont != nullptr) {
+        SetTextureFilter(uiFont->texture, TEXTURE_FILTER_POINT);
+    }
     fish = engine::assets::model("fish");
     lambert->bindLocation(SHADER_LOC_MAP_METALNESS, "shadowMap");
 
@@ -78,11 +86,10 @@ void InitializeScene() {
     camera.projection = CAMERA_PERSPECTIVE;
     cameraController.reset(camera);
     cameraController.setMoveSpeed(70.0f);
-    cameraController.setMouseSensitivity(0.003f);
     cameraController.setSpeedStep(10.0f);
-    cameraController.setSprintMultiplier(4.0f);
 
     DisableCursor();
+    engine::input::init();
 
     Vector3 lightTarget{halfWorld, terrainMaxHeight * 0.3f, halfWorld};
     shadow.init(shadowMapSize, sunDirection, lightTarget, 70.0f, terrainWorldSize * 0.7f);
@@ -141,6 +148,16 @@ void drawMainPass() {
     DrawModelEx(*fish, fishPos, UP.v(), total_time * 80, fishScale, colors::PureWhite);
 
     EndMode3D();
+
+    using engine::input::Action, engine::input::down;
+
+    std::string overlay = "FPS: " + std::to_string(GetFPS()) + "  " + engine::input::compressed_state();
+    if (uiFont != nullptr) {
+        DrawRectangleLines(0, 0, MeasureTextEx(*uiFont, overlay.c_str(), 12.0f, 0.0f).x, 12, Color{0, 0, 0, 128});
+        DrawTextEx(*uiFont, overlay.c_str(), Vector2{0,0}, 12.0, 0.0f, colors::PureWhite);
+         // DrawTextEx(*uiFont, overlay.c_str(), Vector2{12.0f, 12.0f}, 12.0, 0.0f, colors::PureWhite);
+    }
+
     EndTextureMode();
 }
 
@@ -162,8 +179,6 @@ void Draw() {
         captureScreenshot = true;
     }
 
-    DrawFPS(12, 12);
-
     EndDrawing();
 
     if (captureScreenshot) {
@@ -171,6 +186,11 @@ void Draw() {
         snprintf(path, sizeof(path), "screenshot-%03d.png", screenshotIndex++);
         TakeScreenshot(path);
         captureScreenshot = false;
+    }
+
+    if (clearStartupTopmost) {
+        ClearWindowState(FLAG_WINDOW_TOPMOST);
+        clearStartupTopmost = false;
     }
 }
 
@@ -185,14 +205,18 @@ void DetachSceneTextures() {
 void Frame() {
     float dt = GetFrameTime();
     total_time += dt;
+    engine::input::update();
     Update(dt);
     Draw();
 }
 
 int main() {
+    SetConfigFlags(FLAG_WINDOW_TOPMOST);
     InitWindow(screenWidth, screenHeight, PROJECT_WINDOW_TITLE);
     SetTargetFPS(60);
     InitializeScene();
+    SetWindowFocused();
+    clearStartupTopmost = true;
 
     runMainLoop(Frame);
 

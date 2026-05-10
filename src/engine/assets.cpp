@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 namespace engine::assets {
+std::string readFileInternal(const char* path);
 namespace {
 
 std::string resolvePath(const char* relativePath) {
@@ -25,8 +26,13 @@ struct ShaderPaths {
 
 std::unordered_map<std::string, ShaderPaths> gShaderPaths;
 std::unordered_map<std::string, std::string> gTexturePaths;
-std::unordered_map<std::string, std::string> gFontPaths;
+struct FontPath {
+    std::string path;
+    int size = 16;
+};
+std::unordered_map<std::string, FontPath> gFontPaths;
 std::unordered_map<std::string, std::string> gModelPaths;
+std::unordered_map<std::string, std::string> gTextPaths;
 
 std::unordered_map<std::string, Shader*> gShaderCache;
 std::unordered_map<std::string, Texture2D*> gTextureCache;
@@ -37,7 +43,7 @@ bool gInitialized = false;
 
 std::string loadIndexText() {
     std::string path = resolvePath("assets/index.toml");
-    return readFile(path.c_str());
+    return readFileInternal(path.c_str());
 }
 
 void parseIndex(const std::string& indexText) {
@@ -83,8 +89,30 @@ void parseIndex(const std::string& indexText) {
     };
 
     loadSection(table, "textures", gTexturePaths, "assets/textures/");
-    loadSection(table, "fonts", gFontPaths, "assets/fonts/");
+
+    if (table.contains("fonts")) {
+        std::string prefix = resolvePath("assets/fonts/");
+        auto fonts = *table["fonts"].as_table();
+        for (const auto& [key, value] : fonts) {
+            FontPath entry;
+            if (auto path = value.as_string()) {
+                entry.path = prefix + path->get();
+            } else if (auto fontTable = value.as_table()) {
+                if (auto path = (*fontTable)["path"].as_string()) {
+                    entry.path = prefix + path->get();
+                }
+                if (auto size = (*fontTable)["size"].as_integer()) {
+                    entry.size = static_cast<int>(size->get());
+                }
+            }
+            if (!entry.path.empty()) {
+                gFontPaths[std::string(key)] = entry;
+            }
+        }
+    }
+
     loadSection(table, "models", gModelPaths, "assets/models/");
+    loadSection(table, "texts", gTextPaths, "assets/");
 }
 
 } // namespace
@@ -142,8 +170,8 @@ Shader* shader(const char* name) {
         return nullptr;
     }
 
-    std::string vertSource = readFile(pathIt->second.vert.c_str());
-    std::string fragSource = readFile(pathIt->second.frag.c_str());
+    std::string vertSource = readFileInternal(pathIt->second.vert.c_str());
+    std::string fragSource = readFileInternal(pathIt->second.frag.c_str());
     auto* res = new Shader(vertSource.c_str(), fragSource.c_str());
     gShaderCache[name] = res;
     return res;
@@ -180,7 +208,8 @@ Font* font(const char* name) {
         return nullptr;
     }
 
-    auto* res = new Font(LoadFont(pathIt->second.c_str()));
+    int fontSize = pathIt->second.size;
+    auto* res = new Font(LoadFontEx(pathIt->second.path.c_str(), fontSize, nullptr, 0));
     gFontCache[name] = res;
     return res;
 }
@@ -215,11 +244,23 @@ Image image(const char* name) {
     return LoadImage(pathIt->second.c_str());
 }
 
-std::string readFile(const char* path) {
+std::string readFileInternal(const char* path) {
     std::ifstream file(path);
     std::ostringstream contents;
     contents << file.rdbuf();
     return contents.str();
+}
+
+std::string text(const char* name) {
+    init();
+
+    auto pathIt = gTextPaths.find(name);
+    if (pathIt == gTextPaths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: Text '%s' not found in index", name);
+        return {};
+    }
+
+    return readFileInternal(pathIt->second.c_str());
 }
 
 } // namespace engine::assets

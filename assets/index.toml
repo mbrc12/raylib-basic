@@ -5,7 +5,10 @@ depth = { vert = "depth.vert", frag = "depth.frag" }
 [textures]
 
 [fonts]
-main = "capital-hill.ttf"
+main = { path = "capital-hill.ttf", size = 12 }
 
 [models]
 fish = "Fish.glb"
+
+[texts]
+gamepad_mappings = "general/mappings.txt"
