@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project(game LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,19 +22,8 @@ if(NOT EMSCRIPTEN)
     add_subdirectory(deps/backward-cpp)
 endif()
 
-add_executable(${GAME_NAME}
-    src/main.cpp
-    src/engine/assets.cpp
-    src/engine/d3/free_camera.cpp
-    src/engine/d3/model_shader_scope.cpp
-    src/engine/d3/shadow.cpp
-    src/engine/d3/collision.cpp
-    src/engine/input.cpp
-    src/engine/mainloop.cpp
-    src/engine/material_slots.cpp
-    src/engine/shader.cpp
-    src/game_scene.cpp
-)
+file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.cpp)
+add_executable(${GAME_NAME} ${GAME_SOURCES})
 target_compile_definitions(${GAME_NAME} PRIVATE PROJECT_WINDOW_TITLE="${GAME_NAME}")
 target_include_directories(${GAME_NAME} PRIVATE src)
 target_link_libraries(${GAME_NAME} PRIVATE

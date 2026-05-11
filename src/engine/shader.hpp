@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "vec2.hpp"
 #include "vec3.hpp"
 
 namespace engine {
@@ -25,9 +26,11 @@ class Shader {
     void send(const char* name, const float* values, int uniformType);
     void send(const char* name, float value);
     void send(const char* name, const Vector2& value);
+    void send(const char* name, const Vec2f& value);
     void send(const char* name, const Vec3& value);
     void send(const char* name, const float* values, int uniformType, int count);
     void send(const char* name, const Vector2* values, int count);
+    void send(const char* name, const Vec2f* values, int count);
     void send(const char* name, const Vec3* values, int count);
     void send(const char* name, const Texture2D& texture);
     void send(const char* name, const Matrix& mat);
