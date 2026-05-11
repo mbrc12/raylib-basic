@@ -13,9 +13,11 @@ struct GameScene::Impl {
 
     void load() { dbg("Loading scene assets"); }
 
-    void drawDepthPass() {}
+    void enter() {}
 
-    void drawMainPass() {
+    void update(float dt) { totalTime += dt; }
+
+    void draw() {
         BeginTextureMode(canvas);
         ClearBackground(colors::SteamLords_MidnightBlack);
 
@@ -27,15 +29,6 @@ struct GameScene::Impl {
         DrawRectangleLines(0, 0, v.x, v.y, tc);
 
         EndTextureMode();
-    }
-
-    void enter() {}
-
-    void update(float dt) { totalTime += dt; }
-
-    void draw() {
-        drawDepthPass();
-        drawMainPass();
     }
 
     void exit() {}
