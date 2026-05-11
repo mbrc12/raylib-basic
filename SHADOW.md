@@ -32,10 +32,14 @@ This repo uses classic shadow mapping for a directional light. The implementatio
 The relevant code currently lives in:
 
 - [src/main.cpp](/Users/subwave/dev/game/raylt/src/main.cpp)
+- [src/game_scene.cpp](/Users/subwave/dev/game/raylt/src/game_scene.cpp)
+- [src/engine/scene.hpp](/Users/subwave/dev/game/raylt/src/engine/scene.hpp)
 - [src/engine/shadow.hpp](/Users/subwave/dev/game/raylt/src/engine/shadow.hpp)
 - [src/engine/shadow.cpp](/Users/subwave/dev/game/raylt/src/engine/shadow.cpp)
 - [src/engine/model_shader_scope.hpp](/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.hpp)
 - [src/engine/model_shader_scope.cpp](/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.cpp)
+- [src/engine/material_slots.hpp](/Users/subwave/dev/game/raylt/src/engine/material_slots.hpp)
+- [src/engine/material_slots.cpp](/Users/subwave/dev/game/raylt/src/engine/material_slots.cpp)
 - [src/engine/shader.cpp](/Users/subwave/dev/game/raylt/src/engine/shader.cpp)
 - [assets/shaders/depth.vert](/Users/subwave/dev/game/raylt/assets/shaders/depth.vert)
 - [assets/shaders/depth.frag](/Users/subwave/dev/game/raylt/assets/shaders/depth.frag)
@@ -241,7 +245,7 @@ That quantity is a useful mental model. It tells you how much world-space area o
 
 ## 4. Pass 1: Writing the Shadow Map
 
-The depth pass is orchestrated from [src/main.cpp]:
+The depth pass is orchestrated from [src/game_scene.cpp]:
 
 ```cpp
 void drawDepthPass() {
@@ -557,25 +561,35 @@ Even a small mismatch can make the whole scene appear shadowed or unshadowed.
 
 ## 9. Raylib Material Binding
 
-The shadow map is bound through raylib's material texture machinery.
+The engine uses a custom slot name, `ShadowMap`, but raylib still only supports a fixed set of built-in material slots. The engine therefore keeps the slot name at its own layer and maps it to one of raylib's existing slots internally.
 
-In [src/engine/shader.cpp]:
+In [src/engine/material_slots.cpp]:
 
 ```cpp
-void Shader::bindLocation(int locIndex, const char* name) {
-    m_shader.locs[locIndex] = getLocation(name);
+void bindTextureSlot(Shader& shader, MaterialTextureSlot slot, const char* samplerName) {
+    shader.bindLocation(slotToRaylibShader(slot), samplerName);
+}
+
+void setTextureSlot(Model& model, MaterialTextureSlot slot, Texture2D texture) {
+    int mapIndex = slotToRaylibMap(slot);
+    for (int i = 0; i < model.materialCount; ++i) {
+        model.materials[i].maps[mapIndex].texture = texture;
+    }
+}
+
+void clearTextureSlot(Model& model, MaterialTextureSlot slot) {
+    setTextureSlot(model, slot, Texture2D{});
 }
 ```
 
-In [src/main.cpp]:
+In [src/game_scene.cpp]:
 
 ```cpp
-lambert->bindLocation(SHADER_LOC_MAP_METALNESS, "shadowMap");
-terrainModel.materials[0].maps[MATERIAL_MAP_METALNESS].texture = shadow.map.texture;
-fish->materials[i].maps[MATERIAL_MAP_METALNESS].texture = shadow.map.texture;
+engine::bindTextureSlot(*lambert, engine::MaterialTextureSlot::ShadowMap, "shadowMap");
+engine::setTextureSlot(model, engine::MaterialTextureSlot::ShadowMap, shadow.map.texture);
 ```
 
-This is a raylib-specific bridge. The engine tells raylib, "when you bind the metalness slot, route that to the custom `shadowMap` sampler in the shader."
+The internal mapping currently uses raylib's `MATERIAL_MAP_METALNESS` and `SHADER_LOC_MAP_METALNESS`, but that is hidden behind the engine helper. The game code only talks about `ShadowMap`.
 
 The important consequence is that the shadow texture is bound through model/material drawing, not via a separate manual sampler path.
 
@@ -617,7 +631,7 @@ Writes normalized light-space depth into the shadow texture.
 
 Performs lighting, shadow lookup, PCF, and biasing.
 
-### `src/main.cpp`
+### `src/game_scene.cpp`
 
 Orchestrates:
 
@@ -625,7 +639,16 @@ Orchestrates:
 - camera control
 - depth pass
 - main pass
-- presentation to the screen
+- canvas rendering
+
+### `src/main.cpp`
+
+Owns:
+
+- window creation
+- the main 480x270 canvas
+- the top-level frame loop
+- presentation of the canvas to the screen
 
 ## 12. The Full Math in One Line
 
@@ -698,7 +721,7 @@ This repo currently mitigates those with:
 
 ## 14. Current Shadow Parameters
 
-From [src/main.cpp]:
+From [src/game_scene.cpp]:
 
 ```cpp
 constexpr int shadowMapSize = 512;

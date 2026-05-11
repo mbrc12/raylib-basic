@@ -28,10 +28,12 @@ add_executable(${GAME_NAME}
     src/engine/free_camera.cpp
     src/engine/input.cpp
     src/engine/mainloop.cpp
+    src/engine/material_slots.cpp
     src/engine/model_shader_scope.cpp
     src/engine/shader.cpp
     src/engine/shadow.cpp
     src/engine/collision.cpp
+    src/game_scene.cpp
 )
 target_compile_definitions(${GAME_NAME} PRIVATE PROJECT_WINDOW_TITLE="${GAME_NAME}")
 target_include_directories(${GAME_NAME} PRIVATE src)

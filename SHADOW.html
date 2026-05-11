@@ -292,6 +292,10 @@ from pass 1.</li>
 <li><a
 href="/Users/subwave/dev/game/raylt/src/main.cpp">src/main.cpp</a></li>
 <li><a
+href="/Users/subwave/dev/game/raylt/src/game_scene.cpp">src/game_scene.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/scene.hpp">src/engine/scene.hpp</a></li>
+<li><a
 href="/Users/subwave/dev/game/raylt/src/engine/shadow.hpp">src/engine/shadow.hpp</a></li>
 <li><a
 href="/Users/subwave/dev/game/raylt/src/engine/shadow.cpp">src/engine/shadow.cpp</a></li>
@@ -299,6 +303,10 @@ href="/Users/subwave/dev/game/raylt/src/engine/shadow.cpp">src/engine/shadow.cpp
 href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.hpp">src/engine/model_shader_scope.hpp</a></li>
 <li><a
 href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.cpp">src/engine/model_shader_scope.cpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/material_slots.hpp">src/engine/material_slots.hpp</a></li>
+<li><a
+href="/Users/subwave/dev/game/raylt/src/engine/material_slots.cpp">src/engine/material_slots.cpp</a></li>
 <li><a
 href="/Users/subwave/dev/game/raylt/src/engine/shader.cpp">src/engine/shader.cpp</a></li>
 <li><a
@@ -508,7 +516,7 @@ and disappear from the shadow map.</p>
 world-space area one shadow texel represents.</p>
 <h2 id="pass-1-writing-the-shadow-map">4. Pass 1: Writing the Shadow
 Map</h2>
-<p>The depth pass is orchestrated from [src/main.cpp]:</p>
+<p>The depth pass is orchestrated from [src/game_scene.cpp]:</p>
 <div class="sourceCode" id="cb4"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> drawDepthPass<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>beginDepthPass<span class="op">();</span></span>
@@ -782,21 +790,35 @@ from different coordinate systems.</p>
 <p>Even a small mismatch can make the whole scene appear shadowed or
 unshadowed.</p>
 <h2 id="raylib-material-binding">9. Raylib Material Binding</h2>
-<p>The shadow map is bound through raylib's material texture
-machinery.</p>
-<p>In [src/engine/shader.cpp]:</p>
+<p>The engine uses a custom slot name, <code>ShadowMap</code>, but
+raylib still only supports a fixed set of built-in material slots. The
+engine therefore keeps the slot name at its own layer and maps it to one
+of raylib's existing slots internally.</p>
+<p>In [src/engine/material_slots.cpp]:</p>
 <div class="sourceCode" id="cb13"><pre
-class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Shader<span class="op">::</span>bindLocation<span class="op">(</span><span class="dt">int</span> locIndex<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">*</span> name<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_shader</span><span class="op">.</span>locs<span class="op">[</span>locIndex<span class="op">]</span> <span class="op">=</span> getLocation<span class="op">(</span>name<span class="op">);</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>In [src/main.cpp]:</p>
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> bindTextureSlot<span class="op">(</span>Shader<span class="op">&amp;</span> shader<span class="op">,</span> MaterialTextureSlot slot<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">*</span> samplerName<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    shader<span class="op">.</span>bindLocation<span class="op">(</span>slotToRaylibShader<span class="op">(</span>slot<span class="op">),</span> samplerName<span class="op">);</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> setTextureSlot<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">,</span> MaterialTextureSlot slot<span class="op">,</span> Texture2D texture<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> mapIndex <span class="op">=</span> slotToRaylibMap<span class="op">(</span>slot<span class="op">);</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> model<span class="op">.</span>materialCount<span class="op">;</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        model<span class="op">.</span>materials<span class="op">[</span>i<span class="op">].</span>maps<span class="op">[</span>mapIndex<span class="op">].</span>texture <span class="op">=</span> texture<span class="op">;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> clearTextureSlot<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">,</span> MaterialTextureSlot slot<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    setTextureSlot<span class="op">(</span>model<span class="op">,</span> slot<span class="op">,</span> Texture2D<span class="op">{});</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In [src/game_scene.cpp]:</p>
 <div class="sourceCode" id="cb14"><pre
-class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>lambert<span class="op">-&gt;</span>bindLocation<span class="op">(</span>SHADER_LOC_MAP_METALNESS<span class="op">,</span> <span class="st">&quot;shadowMap&quot;</span><span class="op">);</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>terrainModel<span class="op">.</span>materials<span class="op">[</span><span class="dv">0</span><span class="op">].</span>maps<span class="op">[</span>MATERIAL_MAP_METALNESS<span class="op">].</span>texture <span class="op">=</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>fish<span class="op">-&gt;</span>materials<span class="op">[</span>i<span class="op">].</span>maps<span class="op">[</span>MATERIAL_MAP_METALNESS<span class="op">].</span>texture <span class="op">=</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">;</span></span></code></pre></div>
-<p>This is a raylib-specific bridge. The engine tells raylib, "when you
-bind the metalness slot, route that to the custom <code>shadowMap</code>
-sampler in the shader."</p>
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>engine<span class="op">::</span>bindTextureSlot<span class="op">(*</span>lambert<span class="op">,</span> engine<span class="op">::</span>MaterialTextureSlot<span class="op">::</span>ShadowMap<span class="op">,</span> <span class="st">&quot;shadowMap&quot;</span><span class="op">);</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>engine<span class="op">::</span>setTextureSlot<span class="op">(</span>model<span class="op">,</span> engine<span class="op">::</span>MaterialTextureSlot<span class="op">::</span>ShadowMap<span class="op">,</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">);</span></span></code></pre></div>
+<p>The internal mapping currently uses raylib's
+<code>MATERIAL_MAP_METALNESS</code> and
+<code>SHADER_LOC_MAP_METALNESS</code>, but that is hidden behind the
+engine helper. The game code only talks about
+<code>ShadowMap</code>.</p>
 <p>The important consequence is that the shadow texture is bound through
 model/material drawing, not via a separate manual sampler path.</p>
 <h2 id="why-the-scene-uses-a-small-main-render-texture">10. Why the
@@ -830,14 +852,22 @@ the lit pass.</p>
 <h3
 id="assetsshaderslambert."><code>assets/shaders/lambert.*</code></h3>
 <p>Performs lighting, shadow lookup, PCF, and biasing.</p>
-<h3 id="srcmain.cpp"><code>src/main.cpp</code></h3>
+<h3 id="srcgame_scene.cpp"><code>src/game_scene.cpp</code></h3>
 <p>Orchestrates:</p>
 <ul>
 <li>terrain generation</li>
 <li>camera control</li>
 <li>depth pass</li>
 <li>main pass</li>
-<li>presentation to the screen</li>
+<li>canvas rendering</li>
+</ul>
+<h3 id="srcmain.cpp"><code>src/main.cpp</code></h3>
+<p>Owns:</p>
+<ul>
+<li>window creation</li>
+<li>the main 480x270 canvas</li>
+<li>the top-level frame loop</li>
+<li>presentation of the canvas to the screen</li>
 </ul>
 <h2 id="the-full-math-in-one-line">12. The Full Math in One Line</h2>
 <p>If we compress the whole shadow test into one expression, it is
@@ -893,7 +923,7 @@ texels.</p>
 <li>a relatively small 512x512 shadow map for the pixelated style</li>
 </ul>
 <h2 id="current-shadow-parameters">14. Current Shadow Parameters</h2>
-<p>From [src/main.cpp]:</p>
+<p>From [src/game_scene.cpp]:</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> shadowMapSize <span class="op">=</span> <span class="dv">512</span><span class="op">;</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> Vector3 sunDirection<span class="op">{-</span><span class="fl">0.4</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.6</span><span class="bu">f</span><span class="op">};</span></span></code></pre></div>
