@@ -4,39 +4,50 @@
 
 namespace engine {
 
-ScopedModelShader::ScopedModelShader(Model& model, const ::Shader& shader) : m_model(&model) {
-    m_oldShaders.resize(model.materialCount);
-    for (int i = 0; i < model.materialCount; i++) {
-        m_oldShaders[i] = model.materials[i].shader;
-        model.materials[i].shader = shader;
-    }
+ModelShaderScope::ModelShaderScope(Model& model) : m_model(&model), m_enabled(false) {}
+
+ModelShaderScope::~ModelShaderScope() {
+    disable();
 }
 
-ScopedModelShader::~ScopedModelShader() {
-    if (m_model == nullptr) {
+void ModelShaderScope::enable(const ::Shader& shader) {
+    if (m_model == nullptr || m_enabled) {
+        return;
+    }
+
+    m_oldShaders.resize(m_model->materialCount);
+    for (int i = 0; i < m_model->materialCount; i++) {
+        m_oldShaders[i] = m_model->materials[i].shader;
+        m_model->materials[i].shader = shader;
+    }
+    m_enabled = true;
+}
+
+void ModelShaderScope::disable() {
+    if (m_model == nullptr || !m_enabled) {
         return;
     }
 
     for (int i = 0; i < m_model->materialCount; i++) {
         m_model->materials[i].shader = m_oldShaders[i];
     }
+    m_enabled = false;
 }
 
-ScopedModelShader::ScopedModelShader(ScopedModelShader&& other) noexcept
-    : m_model(other.m_model), m_oldShaders(std::move(other.m_oldShaders)) {
+ModelShaderScope::ModelShaderScope(ModelShaderScope&& other) noexcept
+    : m_model(other.m_model), m_oldShaders(std::move(other.m_oldShaders)), m_enabled(other.m_enabled) {
     other.m_model = nullptr;
+    other.m_enabled = false;
 }
 
-ScopedModelShader& ScopedModelShader::operator=(ScopedModelShader&& other) noexcept {
+ModelShaderScope& ModelShaderScope::operator=(ModelShaderScope&& other) noexcept {
     if (this != &other) {
-        if (m_model != nullptr) {
-            for (int i = 0; i < m_model->materialCount; i++) {
-                m_model->materials[i].shader = m_oldShaders[i];
-            }
-        }
+        disable();
         m_model = other.m_model;
         m_oldShaders = std::move(other.m_oldShaders);
+        m_enabled = other.m_enabled;
         other.m_model = nullptr;
+        other.m_enabled = false;
     }
     return *this;
 }

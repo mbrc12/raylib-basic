@@ -182,21 +182,21 @@ Shadow mapping only works if the depth pass and the lighting pass use the same t
 The shadow camera is set up in [src/engine/shadow.cpp]:
 
 ```cpp
-void DirectionalShadow::init(int size, const Vector3& sunDir, const Vector3& target, float distance, float orthoSize) {
+void DirectionalShadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
     map = LoadRenderTexture(size, size);
     SetTextureFilter(map.texture, TEXTURE_FILTER_POINT);
     SetTextureWrap(map.texture, TEXTURE_WRAP_CLAMP);
 
-    Vector3 lightDir = Vector3Normalize(sunDir);
-    Vector3 lightPos = Vector3Add(target, Vector3Scale(lightDir, distance));
+    Vec3 lightDir = sunDir.norm();
+    Vec3 lightPos = target + lightDir * distance;
 
     Matrix lightProj = MatrixOrtho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 200.0f);
-    Matrix lightView = MatrixLookAt(lightPos, target, Vector3{0.0f, 1.0f, 0.0f});
+    Matrix lightView = MatrixLookAt(lightPos, target, Vec3::Up);
     lightVP = MatrixMultiply(lightView, lightProj);
 
     camera.position = lightPos;
     camera.target = target;
-    camera.up = Vector3{0.0f, 1.0f, 0.0f};
+    camera.up = Vec3::Up;
     camera.fovy = orthoSize * 2.0f;
     camera.projection = CAMERA_ORTHOGRAPHIC;
 }
@@ -251,18 +251,22 @@ The depth pass is orchestrated from [src/game_scene.cpp]:
 void drawDepthPass() {
     shadow.beginDepthPass();
 
-    [[maybe_unused]] engine::ScopedModelShader terrainDepth(terrainModel, depth->raw());
-    [[maybe_unused]] engine::ScopedModelShader fishDepth(*fish, depth->raw());
+    engine::ModelShaderScope terrainDepth(terrainModel);
+    engine::ModelShaderScope fishDepth(*fish);
+    terrainDepth.enable(depth->raw());
+    fishDepth.enable(depth->raw());
     depth->send("lightVP", shadow.lightVP);
 
-    DrawModel(terrainModel, ORIGIN.v(), 1.0f, WHITE);
+    DrawModel(terrainModel, Vec3::Origin, 1.0f, WHITE);
 
-    Vector3 fishPos{
+    Vec3 fishPos{
         terrainWorldSize / 2.0f,
         terrainMaxHeight + 4.0f,
         terrainWorldSize / 2.0f + 3.0f};
-    DrawModelEx(*fish, fishPos, UP.v(), total_time * 80, fishScale, WHITE);
+    DrawModelEx(*fish, fishPos, Vec3::Up, totalTime * 80, fishScale, WHITE);
 
+    fishDepth.disable();
+    terrainDepth.disable();
     shadow.endDepthPass();
 }
 ```
@@ -270,11 +274,13 @@ void drawDepthPass() {
 The helper [src/engine/model_shader_scope.cpp] temporarily overrides every material shader in a model:
 
 ```cpp
-ScopedModelShader::ScopedModelShader(Model& model, const ::Shader& shader) : m_model(&model) {
-    m_oldShaders.resize(model.materialCount);
-    for (int i = 0; i < model.materialCount; i++) {
-        m_oldShaders[i] = model.materials[i].shader;
-        model.materials[i].shader = shader;
+ModelShaderScope::ModelShaderScope(Model& model) : m_model(&model) {}
+
+void ModelShaderScope::enable(const ::Shader& shader) {
+    m_oldShaders.resize(m_model->materialCount);
+    for (int i = 0; i < m_model->materialCount; i++) {
+        m_oldShaders[i] = m_model->materials[i].shader;
+        m_model->materials[i].shader = shader;
     }
 }
 ```
@@ -725,7 +731,7 @@ From [src/game_scene.cpp]:
 
 ```cpp
 constexpr int shadowMapSize = 512;
-constexpr Vector3 sunDirection{-0.4f, 1.0f, 0.6f};
+constexpr Vec3 sunDirection{-0.4f, 1.0f, 0.6f};
 ```
 
 From [src/engine/shadow.cpp]:

@@ -106,13 +106,17 @@ struct GameScene::Impl {
     void drawDepthPass() {
         shadow.beginDepthPass();
 
-        [[maybe_unused]] engine::ScopedModelShader terrainDepth(terrainModel, depth->raw());
-        [[maybe_unused]] engine::ScopedModelShader fishDepth(*fish, depth->raw());
+        engine::ModelShaderScope terrainDepth(terrainModel);
+        engine::ModelShaderScope fishDepth(*fish);
+        terrainDepth.enable(depth->raw());
+        fishDepth.enable(depth->raw());
         depth->send("lightVP", shadow.lightVP);
 
         DrawModel(terrainModel, Vec3::Origin, 1.0f, WHITE);
         DrawModelEx(*fish, fishPosition(), Vec3::Up, totalTime * 80, fishScale, WHITE);
 
+        fishDepth.disable();
+        terrainDepth.disable();
         shadow.endDepthPass();
     }
 

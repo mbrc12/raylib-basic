@@ -279,12 +279,12 @@
 implementation is intentionally simple, but the math underneath is the
 same math used by larger engines:</p>
 <ol type="1">
-<li>Render the scene from the light's point of view into a depth
+<li>Render the scene from the light’s point of view into a depth
 texture.</li>
 <li>Render the scene from the player camera.</li>
 <li>For each shaded fragment, transform its world position into light
 space.</li>
-<li>Compare the fragment's light-space depth against the stored depth
+<li>Compare the fragment’s light-space depth against the stored depth
 from pass 1.</li>
 </ol>
 <p>The relevant code currently lives in:</p>
@@ -325,7 +325,7 @@ world geometry -&gt; player camera -&gt; lighting shader -&gt; compare against s
 <p>At the heart of shadow mapping is a depth comparison.</p>
 <p>For a world-space point <span
 class="math inline">\mathbf{p}_{\mathrm{world}}</span>, we compute its
-coordinates in the light's clip space:</p>
+coordinates in the light’s clip space:</p>
 <p><span class="math display">
 \mathbf{p}_{\mathrm{clip}}^{L} =
 M_{\mathrm{lightVP}}\,\mathbf{p}_{\mathrm{world}}
@@ -402,12 +402,12 @@ M_{\mathrm{model}}
 <li><code>M_{\mathrm{model}}</code> places a mesh instance into world
 space.</li>
 <li><code>M_{\mathrm{view}}</code> expresses that world from the
-camera's frame of reference.</li>
+camera’s frame of reference.</li>
 <li><code>M_{\mathrm{proj}}</code> maps the camera frustum into clip
 space.</li>
 </ul>
 <p>In the lit pass, raylib already supplies a per-draw <code>mvp</code>
-uniform that contains the player's projection, view, and the object's
+uniform that contains the player’s projection, view, and the object’s
 model transform. The shader uses:</p>
 <p><span class="math display">
 \mathbf{p}_{\mathrm{clip}}^{\mathrm{camera}} =
@@ -416,8 +416,8 @@ M_{\mathrm{mvp}}\,\mathbf{p}_{\mathrm{obj}}
 <p>and writes:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">gl_Position</span> <span class="op">=</span> mvp <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>vertexPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span></code></pre></div>
-<p>In the shadow pass, the game does not want the player's camera
-transform. It wants the light's transform. That is why the shadow code
+<p>In the shadow pass, the game does not want the player’s camera
+transform. It wants the light’s transform. That is why the shadow code
 keeps the transforms split into:</p>
 <p><span class="math display">
 M_{\mathrm{lightVP}} = M_{\mathrm{proj}}^{L} M_{\mathrm{view}}^{L}
@@ -437,7 +437,7 @@ separate.</li>
 </ol>
 <p>If <code>matModel</code> were baked into <code>lightVP</code>, the
 matrix would no longer be reusable for other objects, and the shadow
-pass would stop being a clean "same light, different object"
+pass would stop being a clean “same light, different object”
 transform.</p>
 <h3 id="why-this-matters">Why this matters</h3>
 <p>Shadow mapping only works if the depth pass and the lighting pass use
@@ -453,21 +453,21 @@ result is either:</p>
 Camera</h2>
 <p>The shadow camera is set up in [src/engine/shadow.cpp]:</p>
 <div class="sourceCode" id="cb3"><pre
-class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> DirectionalShadow<span class="op">::</span>init<span class="op">(</span><span class="dt">int</span> size<span class="op">,</span> <span class="at">const</span> Vector3<span class="op">&amp;</span> sunDir<span class="op">,</span> <span class="at">const</span> Vector3<span class="op">&amp;</span> target<span class="op">,</span> <span class="dt">float</span> distance<span class="op">,</span> <span class="dt">float</span> orthoSize<span class="op">)</span> <span class="op">{</span></span>
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> DirectionalShadow<span class="op">::</span>init<span class="op">(</span><span class="dt">int</span> size<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> sunDir<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> target<span class="op">,</span> <span class="dt">float</span> distance<span class="op">,</span> <span class="dt">float</span> orthoSize<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    map <span class="op">=</span> LoadRenderTexture<span class="op">(</span>size<span class="op">,</span> size<span class="op">);</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    SetTextureFilter<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_FILTER_POINT<span class="op">);</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    SetTextureWrap<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_WRAP_CLAMP<span class="op">);</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    Vector3 lightDir <span class="op">=</span> Vector3Normalize<span class="op">(</span>sunDir<span class="op">);</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    Vector3 lightPos <span class="op">=</span> Vector3Add<span class="op">(</span>target<span class="op">,</span> Vector3Scale<span class="op">(</span>lightDir<span class="op">,</span> distance<span class="op">));</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    Vec3 lightDir <span class="op">=</span> sunDir<span class="op">.</span>norm<span class="op">();</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    Vec3 lightPos <span class="op">=</span> target <span class="op">+</span> lightDir <span class="op">*</span> distance<span class="op">;</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    Matrix lightProj <span class="op">=</span> MatrixOrtho<span class="op">(-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="op">-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="fl">0.1</span><span class="bu">f</span><span class="op">,</span> <span class="fl">200.0</span><span class="bu">f</span><span class="op">);</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    Matrix lightView <span class="op">=</span> MatrixLookAt<span class="op">(</span>lightPos<span class="op">,</span> target<span class="op">,</span> Vector3<span class="op">{</span><span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">});</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    Matrix lightView <span class="op">=</span> MatrixLookAt<span class="op">(</span>lightPos<span class="op">,</span> target<span class="op">,</span> Vec3<span class="op">::</span>Up<span class="op">);</span></span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    lightVP <span class="op">=</span> MatrixMultiply<span class="op">(</span>lightView<span class="op">,</span> lightProj<span class="op">);</span></span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>position <span class="op">=</span> lightPos<span class="op">;</span></span>
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>target <span class="op">=</span> target<span class="op">;</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>up <span class="op">=</span> Vector3<span class="op">{</span><span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">};</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>up <span class="op">=</span> Vec3<span class="op">::</span>Up<span class="op">;</span></span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>fovy <span class="op">=</span> orthoSize <span class="op">*</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">;</span></span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span>projection <span class="op">=</span> CAMERA_ORTHOGRAPHIC<span class="op">;</span></span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
@@ -521,30 +521,36 @@ Map</h2>
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> drawDepthPass<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>beginDepthPass<span class="op">();</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">maybe_unused</span><span class="op">]]</span> engine<span class="op">::</span>ScopedModelShader terrainDepth<span class="op">(</span>terrainModel<span class="op">,</span> depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">maybe_unused</span><span class="op">]]</span> engine<span class="op">::</span>ScopedModelShader fishDepth<span class="op">(*</span>fish<span class="op">,</span> depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    depth<span class="op">-&gt;</span>send<span class="op">(</span><span class="st">&quot;lightVP&quot;</span><span class="op">,</span> shadow<span class="op">.</span>lightVP<span class="op">);</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    DrawModel<span class="op">(</span>terrainModel<span class="op">,</span> ORIGIN<span class="op">.</span>v<span class="op">(),</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    engine<span class="op">::</span>ModelShaderScope terrainDepth<span class="op">(</span>terrainModel<span class="op">);</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    engine<span class="op">::</span>ModelShaderScope fishDepth<span class="op">(*</span>fish<span class="op">);</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    terrainDepth<span class="op">.</span>enable<span class="op">(</span>depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    fishDepth<span class="op">.</span>enable<span class="op">(</span>depth<span class="op">-&gt;</span>raw<span class="op">());</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    depth<span class="op">-&gt;</span>send<span class="op">(</span><span class="st">&quot;lightVP&quot;</span><span class="op">,</span> shadow<span class="op">.</span>lightVP<span class="op">);</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    Vector3 fishPos<span class="op">{</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">,</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        terrainMaxHeight <span class="op">+</span> <span class="fl">4.0</span><span class="bu">f</span><span class="op">,</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span> <span class="op">+</span> <span class="fl">3.0</span><span class="bu">f</span><span class="op">};</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    DrawModelEx<span class="op">(*</span>fish<span class="op">,</span> fishPos<span class="op">,</span> UP<span class="op">.</span>v<span class="op">(),</span> total_time <span class="op">*</span> <span class="dv">80</span><span class="op">,</span> fishScale<span class="op">,</span> WHITE<span class="op">);</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>endDepthPass<span class="op">();</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    DrawModel<span class="op">(</span>terrainModel<span class="op">,</span> Vec3<span class="op">::</span>Origin<span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    Vec3 fishPos<span class="op">{</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        terrainMaxHeight <span class="op">+</span> <span class="fl">4.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        terrainWorldSize <span class="op">/</span> <span class="fl">2.0</span><span class="bu">f</span> <span class="op">+</span> <span class="fl">3.0</span><span class="bu">f</span><span class="op">};</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    DrawModelEx<span class="op">(*</span>fish<span class="op">,</span> fishPos<span class="op">,</span> Vec3<span class="op">::</span>Up<span class="op">,</span> totalTime <span class="op">*</span> <span class="dv">80</span><span class="op">,</span> fishScale<span class="op">,</span> WHITE<span class="op">);</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    fishDepth<span class="op">.</span>disable<span class="op">();</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    terrainDepth<span class="op">.</span>disable<span class="op">();</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>endDepthPass<span class="op">();</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>The helper [src/engine/model_shader_scope.cpp] temporarily overrides
 every material shader in a model:</p>
 <div class="sourceCode" id="cb5"><pre
-class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ScopedModelShader<span class="op">::</span>ScopedModelShader<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">,</span> <span class="at">const</span> <span class="op">::</span>Shader<span class="op">&amp;</span> shader<span class="op">)</span> <span class="op">:</span> <span class="va">m_model</span><span class="op">(&amp;</span>model<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_oldShaders</span><span class="op">.</span>resize<span class="op">(</span>model<span class="op">.</span>materialCount<span class="op">);</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> model<span class="op">.</span>materialCount<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_oldShaders</span><span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> model<span class="op">.</span>materials<span class="op">[</span>i<span class="op">].</span>shader<span class="op">;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        model<span class="op">.</span>materials<span class="op">[</span>i<span class="op">].</span>shader <span class="op">=</span> shader<span class="op">;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ModelShaderScope<span class="op">::</span>ModelShaderScope<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">)</span> <span class="op">:</span> <span class="va">m_model</span><span class="op">(&amp;</span>model<span class="op">)</span> <span class="op">{}</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> ModelShaderScope<span class="op">::</span>enable<span class="op">(</span><span class="at">const</span> <span class="op">::</span>Shader<span class="op">&amp;</span> shader<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_oldShaders</span><span class="op">.</span>resize<span class="op">(</span><span class="va">m_model</span><span class="op">-&gt;</span>materialCount<span class="op">);</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="va">m_model</span><span class="op">-&gt;</span>materialCount<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_oldShaders</span><span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="va">m_model</span><span class="op">-&gt;</span>materials<span class="op">[</span>i<span class="op">].</span>shader<span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_model</span><span class="op">-&gt;</span>materials<span class="op">[</span>i<span class="op">].</span>shader <span class="op">=</span> shader<span class="op">;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>This keeps the depth pass isolated from the normal lighting shader
 without having to permanently mutate the model materials.</p>
 <h3 id="depth-pass-state">Depth pass state</h3>
@@ -570,7 +576,7 @@ self-shadowing on closed meshes by storing the back side of the surface
 shell instead of the exact front face.</li>
 </ul>
 <h3 id="shadow-camera-view-transform">Shadow camera view transform</h3>
-<p>The light view matrix transforms a world point into the light's
+<p>The light view matrix transforms a world point into the light’s
 camera coordinates:</p>
 <p><span class="math display">
 \mathbf{p}_{\mathrm{view}}^{L} =
@@ -793,7 +799,7 @@ unshadowed.</p>
 <p>The engine uses a custom slot name, <code>ShadowMap</code>, but
 raylib still only supports a fixed set of built-in material slots. The
 engine therefore keeps the slot name at its own layer and maps it to one
-of raylib's existing slots internally.</p>
+of raylib’s existing slots internally.</p>
 <p>In [src/engine/material_slots.cpp]:</p>
 <div class="sourceCode" id="cb13"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> bindTextureSlot<span class="op">(</span>Shader<span class="op">&amp;</span> shader<span class="op">,</span> MaterialTextureSlot slot<span class="op">,</span> <span class="at">const</span> <span class="dt">char</span><span class="op">*</span> samplerName<span class="op">)</span> <span class="op">{</span></span>
@@ -814,7 +820,7 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#
 <div class="sourceCode" id="cb14"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>engine<span class="op">::</span>bindTextureSlot<span class="op">(*</span>lambert<span class="op">,</span> engine<span class="op">::</span>MaterialTextureSlot<span class="op">::</span>ShadowMap<span class="op">,</span> <span class="st">&quot;shadowMap&quot;</span><span class="op">);</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>engine<span class="op">::</span>setTextureSlot<span class="op">(</span>model<span class="op">,</span> engine<span class="op">::</span>MaterialTextureSlot<span class="op">::</span>ShadowMap<span class="op">,</span> shadow<span class="op">.</span>map<span class="op">.</span>texture<span class="op">);</span></span></code></pre></div>
-<p>The internal mapping currently uses raylib's
+<p>The internal mapping currently uses raylib’s
 <code>MATERIAL_MAP_METALNESS</code> and
 <code>SHADER_LOC_MAP_METALNESS</code>, but that is hidden behind the
 engine helper. The game code only talks about
@@ -842,7 +848,7 @@ expensive to compute, which fits the intended pixelated style.</p>
 </ul>
 <h3
 id="srcenginemodel_shader_scope."><code>src/engine/model_shader_scope.*</code></h3>
-<p>Temporarily replaces a model's material shaders with the depth
+<p>Temporarily replaces a model’s material shaders with the depth
 shader, then restores them automatically.</p>
 <p>This is a local cleanup layer over a raylib limitation: model
 materials are stateful, but the depth pass wants a different shader than
@@ -926,7 +932,7 @@ texels.</p>
 <p>From [src/game_scene.cpp]:</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> shadowMapSize <span class="op">=</span> <span class="dv">512</span><span class="op">;</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> Vector3 sunDirection<span class="op">{-</span><span class="fl">0.4</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.6</span><span class="bu">f</span><span class="op">};</span></span></code></pre></div>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> Vec3 sunDirection<span class="op">{-</span><span class="fl">0.4</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.6</span><span class="bu">f</span><span class="op">};</span></span></code></pre></div>
 <p>From [src/engine/shadow.cpp]:</p>
 <div class="sourceCode" id="cb17"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>Matrix lightProj <span class="op">=</span> MatrixOrtho<span class="op">(-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="op">-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="fl">0.1</span><span class="bu">f</span><span class="op">,</span> <span class="fl">200.0</span><span class="bu">f</span><span class="op">);</span></span></code></pre></div>

@@ -6,20 +6,24 @@
 
 namespace engine {
 
-class ScopedModelShader {
+class ModelShaderScope {
   public:
-    ScopedModelShader(Model& model, const ::Shader& shader);
-    ~ScopedModelShader();
+    explicit ModelShaderScope(Model& model);
+    ~ModelShaderScope();
 
-    ScopedModelShader(const ScopedModelShader&) = delete;
-    ScopedModelShader& operator=(const ScopedModelShader&) = delete;
+    ModelShaderScope(const ModelShaderScope&) = delete;
+    ModelShaderScope& operator=(const ModelShaderScope&) = delete;
 
-    ScopedModelShader(ScopedModelShader&& other) noexcept;
-    ScopedModelShader& operator=(ScopedModelShader&& other) noexcept;
+    ModelShaderScope(ModelShaderScope&& other) noexcept;
+    ModelShaderScope& operator=(ModelShaderScope&& other) noexcept;
+
+    void enable(const ::Shader& shader);
+    void disable();
 
   private:
     Model* m_model = nullptr;
     std::vector<::Shader> m_oldShaders;
+    bool m_enabled = false;
 };
 
 } // namespace engine
