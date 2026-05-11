@@ -15,8 +15,8 @@ end
 if set -q _flag_compile
     set -l target $_flag_compile
     if test "$target" != "opengl" -a "$target" != "angle" -a "$target" != "sdl3-angle" -a "$target" != "web"
-        echo "usage: fish dev.fish --compile [angle|sdl3-angle|opengl|web]"
-        exit 1
+            echo "usage: fish dev.fish -c [angle|sdl3-angle|opengl|web]"
+            exit 1
     end
 
     fish build.fish --no-run "$target"; or exit 1
@@ -32,10 +32,10 @@ if set -q _flag_run
         case sdl3-angle
             exec build/bin/macos/game
         case '*'
-            echo "usage: fish dev.fish --run [angle|sdl3-angle|opengl]"
+            echo "usage: fish dev.fish -r [angle|sdl3-angle|opengl]"
             exit 1
     end
 end
 
-echo "usage: fish dev.fish --compile [angle|sdl3-angle|opengl|web] | --run [angle|sdl3-angle|opengl]"
+echo "usage: fish dev.fish -c [angle|sdl3-angle|opengl|web] | -r [angle|sdl3-angle|opengl]"
 exit 1

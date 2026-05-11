@@ -15,7 +15,7 @@ class FreeCamera {
     void update(Camera3D* camera, float dt);
 
   private:
-    Vec3 m_up{Vec3::Up};
+    Vec3f m_up{Vec3f::Up};
     float m_yaw = 0.0f;
     float m_pitch = 0.0f;
     float m_moveSpeed = 45.0f;

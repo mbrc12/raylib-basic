@@ -12,8 +12,8 @@ float clampf(float v, float lo, float hi) {
     return std::max(lo, std::min(v, hi));
 }
 
-Vec3 forwardFromAngles(float yaw, float pitch) {
-    return Vec3{
+Vec3f forwardFromAngles(float yaw, float pitch) {
+    return Vec3f{
         std::sinf(yaw) * std::cosf(pitch),
         std::sinf(pitch),
         std::cosf(yaw) * std::cosf(pitch),
@@ -25,11 +25,11 @@ Vec3 forwardFromAngles(float yaw, float pitch) {
 void FreeCamera::reset(const Camera3D& camera) {
     m_up = camera.up;
 
-    Vec3 forward = Vec3(camera.target) - Vec3(camera.position);
+    Vec3f forward = Vec3f(camera.target) - Vec3f(camera.position);
     forward = forward.norm();
 
     if (forward.lenSqr() <= 0.0f) {
-        forward = Vec3{0.0f, 0.0f, -1.0f};
+        forward = Vec3f{0.0f, 0.0f, -1.0f};
     }
 
     m_pitch = std::asinf(clampf(forward.y, -1.0f, 1.0f));
@@ -50,10 +50,10 @@ void FreeCamera::update(Camera3D* camera, float dt) {
     m_pitch += look.y * m_lookSensitivity;
     m_pitch = clampf(m_pitch, -1.54f, 1.54f);
 
-    Vec3 forward = forwardFromAngles(m_yaw, m_pitch);
-    Vec3 right = forward.cross(m_up).norm();
+    Vec3f forward = forwardFromAngles(m_yaw, m_pitch);
+    Vec3f right = forward.cross(m_up).norm();
 
-    Vec3 move{};
+    Vec3f move{};
     if (input::down(input::Action::Up)) move = move + forward;
     if (input::down(input::Action::Down)) move = move - forward;
     if (input::down(input::Action::Right)) move = move + right;
@@ -63,10 +63,10 @@ void FreeCamera::update(Camera3D* camera, float dt) {
 
     if (move.lenSqr() > 0.0f) {
         move = move.norm();
-        camera->position = Vec3(camera->position) + move * (m_moveSpeed * dt);
+        camera->position = Vec3f(camera->position) + move * (m_moveSpeed * dt);
     }
 
-    camera->target = Vec3(camera->position) + forward;
+    camera->target = Vec3f(camera->position) + forward;
     camera->up = m_up;
 }
 

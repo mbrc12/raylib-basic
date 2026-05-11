@@ -5,21 +5,21 @@
 
 namespace engine::d3 {
 
-void Shadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
+void Shadow::init(int size, const Vec3f& sunDir, const Vec3f& target, float distance, float orthoSize) {
     map = LoadRenderTexture(size, size);
     SetTextureFilter(map.texture, TEXTURE_FILTER_POINT);
     SetTextureWrap(map.texture, TEXTURE_WRAP_CLAMP);
 
-    Vec3 lightDir = sunDir.norm();
-    Vec3 lightPos = target + lightDir * distance;
+    Vec3f lightDir = sunDir.norm();
+    Vec3f lightPos = target + lightDir * distance;
 
     Matrix lightProj = MatrixOrtho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 200.0f);
-    Matrix lightView = MatrixLookAt(lightPos, target, Vec3::Up);
+    Matrix lightView = MatrixLookAt(lightPos, target, Vec3f::Up);
     lightVP = MatrixMultiply(lightView, lightProj);
 
     camera.position = lightPos;
     camera.target = target;
-    camera.up = Vec3::Up;
+    camera.up = Vec3f::Up;
     camera.fovy = orthoSize * 2.0f;
     camera.projection = CAMERA_ORTHOGRAPHIC;
 }

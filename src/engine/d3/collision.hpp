@@ -4,17 +4,17 @@
 namespace engine::d3 {
 
 struct Box {
-    Vec3 center;
+    Vec3f center;
     float halfX, halfY, halfZ;
 };
 
 struct SweepResult {
     float t;
-    Vec3 pos;
-    Vec3 normal;
+    Vec3f pos;
+    Vec3f normal;
     bool intersect;
 };
 
-SweepResult sweep(const Box& body, Vec3 target, const Box& other);
+SweepResult sweep(const Box& body, Vec3f target, const Box& other);
 
 } // namespace engine::d3

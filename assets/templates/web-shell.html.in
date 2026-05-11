@@ -33,7 +33,7 @@
         background: #000;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
-        outline: 1px solid rgba(255, 255, 255, 0.14);
+        outline: 0px solid rgba(255, 255, 255, 0.14);
       }
 
       #status {

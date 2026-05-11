@@ -14,8 +14,8 @@
 constexpr int gameRenderWidth = 480;
 constexpr int gameRenderHeight = 270;
 constexpr int gameScale = 3;
-constexpr int screenWidth = gameRenderWidth * gameScale;
-constexpr int screenHeight = gameRenderHeight * gameScale;
+constexpr int defaultScreenWidth = gameRenderWidth * gameScale;
+constexpr int defaultScreenHeight = gameRenderHeight * gameScale;
 
 RenderTexture2D canvas{};
 GameScene scene{};
@@ -26,6 +26,9 @@ bool clearStartupTopmost = false;
 void presentCanvas() {
     BeginDrawing();
     ClearBackground(colors::SteamLords_MidnightBlack);
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
     DrawTexturePro(
         canvas.texture,
         Rectangle{0.0f, 0.0f, static_cast<float>(canvas.texture.width), static_cast<float>(-canvas.texture.height)},
@@ -66,7 +69,7 @@ void frame() {
 
 int main() {
     SetConfigFlags(FLAG_WINDOW_TOPMOST);
-    InitWindow(screenWidth, screenHeight, PROJECT_WINDOW_TITLE);
+    InitWindow(defaultScreenWidth, defaultScreenHeight, PROJECT_WINDOW_TITLE);
     SetTargetFPS(60);
 
     canvas = LoadRenderTexture(gameRenderWidth, gameRenderHeight);

@@ -19,7 +19,7 @@ struct GameScene::Impl {
         BeginTextureMode(canvas);
         ClearBackground(colors::SteamLords_MidnightBlack);
 
-        auto tc = colors::SteamLords_DeepFern;
+        auto tc = colors::SteamLords_ForestGreen;
 
         std::string overlay = "FPS: " + std::to_string(GetFPS()) + "  " + engine::input::compressed_state();
         engine::drawText(overlay, 0, 0, tc);
