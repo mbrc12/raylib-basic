@@ -56,7 +56,7 @@ void Shader::send(const char* name, const Vector2& value) {
     SetShaderValue(m_shader, getLocation(name), &value.x, SHADER_UNIFORM_VEC2);
 }
 
-void Shader::send(const char* name, const Vector3& value)  {
+void Shader::send(const char* name, const Vec3& value)  {
     SetShaderValue(m_shader, getLocation(name), &value.x, SHADER_UNIFORM_VEC3);
 }
 
@@ -68,7 +68,7 @@ void Shader::send(const char* name, const Vector2* values, int count)  {
     SetShaderValueV(m_shader, getLocation(name), values, SHADER_UNIFORM_VEC2, count);
 }
 
-void Shader::send(const char* name, const Vector3* values, int count)  {
+void Shader::send(const char* name, const Vec3* values, int count)  {
     SetShaderValueV(m_shader, getLocation(name), values, SHADER_UNIFORM_VEC3, count);
 }
 

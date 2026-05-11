@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include "raymath.h"
 #include "input.hpp"
 
 namespace engine {
@@ -13,12 +12,12 @@ float clampf(float v, float lo, float hi) {
     return std::max(lo, std::min(v, hi));
 }
 
-Vector3 forwardFromAngles(float yaw, float pitch) {
-    return Vector3Normalize(Vector3{
+Vec3 forwardFromAngles(float yaw, float pitch) {
+    return Vec3{
         std::sinf(yaw) * std::cosf(pitch),
         std::sinf(pitch),
         std::cosf(yaw) * std::cosf(pitch),
-    });
+    }.norm();
 }
 
 } // namespace
@@ -26,9 +25,11 @@ Vector3 forwardFromAngles(float yaw, float pitch) {
 void FreeCameraController::reset(const Camera3D& camera) {
     m_up = camera.up;
 
-    Vector3 forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
-    if (Vector3LengthSqr(forward) <= 0.0f) {
-        forward = Vector3{0.0f, 0.0f, -1.0f};
+    Vec3 forward = Vec3(camera.target) - camera.position;
+    forward = forward.norm();
+
+    if (forward.lenSqr() <= 0.0f) {
+        forward = Vec3{0.0f, 0.0f, -1.0f};
     }
 
     m_pitch = std::asinf(clampf(forward.y, -1.0f, 1.0f));
@@ -49,23 +50,23 @@ void FreeCameraController::update(Camera3D* camera, float dt) {
     m_pitch += look.y * m_lookSensitivity;
     m_pitch = clampf(m_pitch, -1.54f, 1.54f);
 
-    Vector3 forward = forwardFromAngles(m_yaw, m_pitch);
-    Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, m_up));
+    Vec3 forward = forwardFromAngles(m_yaw, m_pitch);
+    Vec3 right = forward.cross(m_up).norm();
 
-    Vector3 move{};
-    if (input::down(input::Action::Up)) move = Vector3Add(move, forward);
-    if (input::down(input::Action::Down)) move = Vector3Subtract(move, forward);
-    if (input::down(input::Action::Right)) move = Vector3Add(move, right);
-    if (input::down(input::Action::Left)) move = Vector3Subtract(move, right);
-    if (input::down(input::Action::Interact)) move = Vector3Add(move, m_up);
-    if (input::down(input::Action::Back)) move = Vector3Subtract(move, m_up);
+    Vec3 move{};
+    if (input::down(input::Action::Up)) move = move + forward;
+    if (input::down(input::Action::Down)) move = move - forward;
+    if (input::down(input::Action::Right)) move = move + right;
+    if (input::down(input::Action::Left)) move = move - right;
+    if (input::down(input::Action::Interact)) move = move + m_up;
+    if (input::down(input::Action::Back)) move = move - m_up;
 
-    if (Vector3LengthSqr(move) > 0.0f) {
-        move = Vector3Normalize(move);
-        camera->position = Vector3Add(camera->position, Vector3Scale(move, m_moveSpeed * dt));
+    if (move.lenSqr() > 0.0f) {
+        move = move.norm();
+        camera->position = Vec3(camera->position) + move * (m_moveSpeed * dt);
     }
 
-    camera->target = Vector3Add(camera->position, forward);
+    camera->target = Vec3(camera->position) + forward;
     camera->up = m_up;
 }
 

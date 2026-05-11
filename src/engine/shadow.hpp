@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "vec3.hpp"
 
 namespace engine {
 
@@ -9,7 +10,7 @@ struct DirectionalShadow {
     Camera3D camera{};
     Matrix lightVP{};
 
-    void init(int size, const Vector3& sunDir, const Vector3& target, float distance, float orthoSize);
+    void init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize);
     void beginDepthPass();
     void endDepthPass();
     void unload();

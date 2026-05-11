@@ -17,8 +17,8 @@ constexpr int terrainTexSize = 256;
 constexpr float terrainWorldSize = 200.0f;
 constexpr float terrainMaxHeight = 12.0f;
 constexpr int shadowMapSize = 512;
-constexpr Vector3 fishScale{5.0f, 5.0f, 5.0f};
-constexpr Vector3 sunDirection{-0.4f, 1.0f, 0.6f};
+constexpr Vec3 fishScale{5.0f, 5.0f, 5.0f};
+constexpr Vec3 sunDirection{-0.4f, 1.0f, 0.6f};
 
 Model generateTerrain(Texture2D* terrainTex, engine::Shader* lambert, const engine::DirectionalShadow& shadow) {
     Image img = GenImageColor(terrainTexSize, terrainTexSize, BLACK);
@@ -33,7 +33,7 @@ Model generateTerrain(Texture2D* terrainTex, engine::Shader* lambert, const engi
         }
     }
 
-    Mesh mesh = GenMeshHeightmap(img, Vector3{terrainWorldSize, terrainMaxHeight, terrainWorldSize});
+    Mesh mesh = GenMeshHeightmap(img, Vec3{terrainWorldSize, terrainMaxHeight, terrainWorldSize});
     *terrainTex = LoadTextureFromImage(img);
     UnloadImage(img);
 
@@ -45,8 +45,8 @@ Model generateTerrain(Texture2D* terrainTex, engine::Shader* lambert, const engi
     return model;
 }
 
-Vector3 fishPosition() {
-    return Vector3{terrainWorldSize / 2.0f, terrainMaxHeight + 4.0f, terrainWorldSize / 2.0f + 3.0f};
+Vec3 fishPosition() {
+    return Vec3{terrainWorldSize / 2.0f, terrainMaxHeight + 4.0f, terrainWorldSize / 2.0f + 3.0f};
 }
 
 } // namespace
@@ -77,13 +77,13 @@ struct GameScene::Impl {
         fish = engine::assets::model("fish");
 
         float halfWorld = terrainWorldSize / 2.0f;
-        camera.position = Vector3{halfWorld, terrainMaxHeight * 7.0f, halfWorld + terrainWorldSize * 0.75f};
-        camera.target = Vector3{halfWorld, terrainMaxHeight * 0.35f, halfWorld};
-        camera.up = Vector3{0.0f, 1.0f, 0.0f};
+        camera.position = Vec3{halfWorld, terrainMaxHeight * 7.0f, halfWorld + terrainWorldSize * 0.75f};
+        camera.target = Vec3{halfWorld, terrainMaxHeight * 0.35f, halfWorld};
+        camera.up = Vec3::Up;
         camera.fovy = 45.0f;
         camera.projection = CAMERA_PERSPECTIVE;
 
-        Vector3 lightTarget{halfWorld, terrainMaxHeight * 0.3f, halfWorld};
+        Vec3 lightTarget{halfWorld, terrainMaxHeight * 0.3f, halfWorld};
         shadow.init(shadowMapSize, sunDirection, lightTarget, 70.0f, terrainWorldSize * 0.7f);
 
         terrainModel = generateTerrain(&terrainTex, lambert, shadow);
@@ -110,8 +110,8 @@ struct GameScene::Impl {
         [[maybe_unused]] engine::ScopedModelShader fishDepth(*fish, depth->raw());
         depth->send("lightVP", shadow.lightVP);
 
-        DrawModel(terrainModel, ORIGIN.v(), 1.0f, WHITE);
-        DrawModelEx(*fish, fishPosition(), UP.v(), totalTime * 80, fishScale, WHITE);
+        DrawModel(terrainModel, Vec3::Origin, 1.0f, WHITE);
+        DrawModelEx(*fish, fishPosition(), Vec3::Up, totalTime * 80, fishScale, WHITE);
 
         shadow.endDepthPass();
     }
@@ -127,8 +127,8 @@ struct GameScene::Impl {
         lambert->send("fogDensity", 0.0f);
         lambert->send("lightVP", shadow.lightVP);
 
-        DrawModel(terrainModel, ORIGIN.v(), 1.0f, WHITE);
-        DrawModelEx(*fish, fishPosition(), UP.v(), totalTime * 80, fishScale, colors::PureWhite);
+        DrawModel(terrainModel, Vec3::Origin, 1.0f, WHITE);
+        DrawModelEx(*fish, fishPosition(), Vec3::Up, totalTime * 80, fishScale, colors::PureWhite);
 
         EndMode3D();
 

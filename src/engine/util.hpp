@@ -37,6 +37,5 @@ inline void dbg_impl(const char *file, int line, const char *fmt, ...) {
 
 } // namespace util
 
-Vec3 ORIGIN{0, 0, 0};
-Vec3 UP{0, 1, 0};
+
 

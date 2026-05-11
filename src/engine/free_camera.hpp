@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "vec3.hpp"
 
 namespace engine {
 
@@ -14,7 +15,7 @@ class FreeCameraController {
     void update(Camera3D* camera, float dt);
 
   private:
-    Vector3 m_up{0.0f, 1.0f, 0.0f};
+    Vec3 m_up{Vec3::Up};
     float m_yaw = 0.0f;
     float m_pitch = 0.0f;
     float m_moveSpeed = 45.0f;
