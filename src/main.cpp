@@ -1,6 +1,6 @@
+#include "engine/registry.hpp"
 #include "raylib.h"
 
-#include <cstdio>
 #include <format>
 
 #include "colors.hpp"
@@ -75,7 +75,8 @@ int main() {
 
     canvas = LoadRenderTexture(gameRenderWidth, gameRenderHeight);
     SetTextureFilter(canvas.texture, TEXTURE_FILTER_POINT);
-    scene.setCanvas(canvas);
+
+    engine::registry::store(canvas);
 
     engine::input::init();
     scene.load();

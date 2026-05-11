@@ -4,6 +4,7 @@
 
 #include "colors.hpp"
 #include "engine/input.hpp"
+#include "engine/registry.hpp"
 #include "engine/text.hpp"
 #include "engine/util.hpp"
 
@@ -18,6 +19,7 @@ struct GameScene::Impl {
     void update(float dt) { totalTime += dt; }
 
     void draw() {
+        auto canvas = engine::registry::get<RenderTexture2D>();
         BeginTextureMode(canvas);
         ClearBackground(colors::SteamLords_MidnightBlack);
 
@@ -37,8 +39,6 @@ struct GameScene::Impl {
 GameScene::GameScene() : m_impl(std::make_unique<Impl>()) {}
 
 GameScene::~GameScene() = default;
-
-void GameScene::setCanvas(RenderTexture2D canvas) { m_impl->canvas = canvas; }
 
 void GameScene::load() { m_impl->load(); }
 

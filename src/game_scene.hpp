@@ -2,15 +2,12 @@
 
 #include <memory>
 
-#include "raylib.h"
 #include "engine/scene.hpp"
 
 class GameScene : public engine::Scene {
   public:
     GameScene();
     ~GameScene() override;
-
-    void setCanvas(RenderTexture2D canvas);
 
     void load() override;
     void enter() override;
