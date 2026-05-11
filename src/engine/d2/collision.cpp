@@ -1,7 +1,8 @@
 #include "collision.hpp"
+
 #include <cmath>
 
-namespace engine::d3 {
+namespace engine::d2 {
 namespace {
 
 constexpr float INF = 1e30f;
@@ -9,23 +10,21 @@ constexpr float INF = 1e30f;
 bool in_range(float v, float lo, float hi) { return v > lo && v < hi; }
 
 struct Face {
-    Vec3f n;
+    Vec2f n;
     float p, q;
 };
 
-void liang_barsky(Vec3f v, const Vec3f& mn, const Vec3f& mx, float& t1, Vec3f& n1, float& t2, Vec3f& n2) {
+void liang_barsky(Vec2f v, const Vec2f& mn, const Vec2f& mx, float& t1, Vec2f& n1, float& t2, Vec2f& n2) {
     t1 = -INF;
     t2 = INF;
     n1 = {};
     n2 = {};
 
     Face faces[] = {
-        {{-1, 0, 0}, -v.x, -mn.x},
-        {{1, 0, 0}, v.x, mx.x},
-        {{0, -1, 0}, -v.y, -mn.y},
-        {{0, 1, 0}, v.y, mx.y},
-        {{0, 0, -1}, -v.z, -mn.z},
-        {{0, 0, 1}, v.z, mx.z},
+        {{-1, 0}, -v.x, -mn.x},
+        {{1, 0}, v.x, mx.x},
+        {{0, -1}, -v.y, -mn.y},
+        {{0, 1}, v.y, mx.y},
     };
 
     for (auto& f : faces) {
@@ -64,48 +63,46 @@ void liang_barsky(Vec3f v, const Vec3f& mn, const Vec3f& mx, float& t1, Vec3f& n
 
 } // namespace
 
-SweepResult3 sweep(const Box3& body, Vec3f target, const Box3& other) {
-    Vec3f v = target - body.center;
+SweepResult2 sweep(const Box2& body, Vec2f target, const Box2& other) {
+    Vec2f v = target - body.center;
 
-    Vec3f mn{
+    Vec2f mn{
         other.center.x - other.halfX - body.center.x - body.halfX,
         other.center.y - other.halfY - body.center.y - body.halfY,
-        other.center.z - other.halfZ - body.center.z - body.halfZ,
     };
-    Vec3f mx{
+    Vec2f mx{
         other.center.x + other.halfX - body.center.x + body.halfX,
         other.center.y + other.halfY - body.center.y + body.halfY,
-        other.center.z + other.halfZ - body.center.z + body.halfZ,
     };
 
-    bool intersect = in_range(0, mn.x, mx.x) && in_range(0, mn.y, mx.y) && in_range(0, mn.z, mx.z);
+    bool intersect = in_range(0, mn.x, mx.x) && in_range(0, mn.y, mx.y);
 
-    if (intersect && v.x == 0 && v.y == 0 && v.z == 0) {
-        float px = fabsf(mn.x) < fabsf(mx.x) ? mn.x : mx.x;
-        float py = fabsf(mn.y) < fabsf(mx.y) ? mn.y : mx.y;
-        float pz = fabsf(mn.z) < fabsf(mx.z) ? mn.z : mx.z;
-        float ax = fabsf(px), ay = fabsf(py), az = fabsf(pz);
+    if (intersect && v.x == 0 && v.y == 0) {
+        float px = std::fabs(mn.x) < std::fabs(mx.x) ? mn.x : mx.x;
+        float py = std::fabs(mn.y) < std::fabs(mx.y) ? mn.y : mx.y;
+        float ax = std::fabs(px), ay = std::fabs(py);
 
-        Vec3f normal{};
-        if (ax <= ay && ax <= az)
+        Vec2f normal{};
+        if (ax <= ay) {
             normal.x = px > 0 ? 1 : -1;
-        else if (ay <= az)
+        } else {
             normal.y = py > 0 ? 1 : -1;
-        else
-            normal.z = pz > 0 ? 1 : -1;
+        }
+
         return {0, body.center, normal, true};
     }
 
     float t1, t2;
-    Vec3f n1, n2;
+    Vec2f n1, n2;
     liang_barsky(v, mn, mx, t1, n1, t2, n2);
-    if (t1 > t2)
+    if (t1 > t2) {
         return {1, target, {}, false};
+    }
 
     float t;
-    Vec3f normal;
+    Vec2f normal;
     if (intersect) {
-        if (fabsf(t1) <= fabsf(t2)) {
+        if (std::fabs(t1) <= std::fabs(t2)) {
             t = t1;
             normal = n1;
         } else {
@@ -119,20 +116,17 @@ SweepResult3 sweep(const Box3& body, Vec3f target, const Box3& other) {
         return {1, target, {}, false};
     }
 
-    Vec3f os{other.halfX, other.halfY, other.halfZ};
-    Vec3f bs{body.halfX, body.halfY, body.halfZ};
-    Vec3f pos;
+    Vec2f os{other.halfX, other.halfY};
+    Vec2f bs{body.halfX, body.halfY};
+    Vec2f pos;
     pos.x = normal.x < 0   ? other.center.x - os.x - bs.x
             : normal.x > 0 ? other.center.x + os.x + bs.x
                            : body.center.x + v.x * t;
     pos.y = normal.y < 0   ? other.center.y - os.y - bs.y
             : normal.y > 0 ? other.center.y + os.y + bs.y
                            : body.center.y + v.y * t;
-    pos.z = normal.z < 0   ? other.center.z - os.z - bs.z
-            : normal.z > 0 ? other.center.z + os.z + bs.z
-                           : body.center.z + v.z * t;
 
     return {t, pos, normal, intersect};
 }
 
-} // namespace engine::d3
+} // namespace engine::d2

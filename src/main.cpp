@@ -1,6 +1,7 @@
 #include "raylib.h"
 
 #include <cstdio>
+#include <format>
 
 #include "colors.hpp"
 #include "engine/input.hpp"
@@ -35,7 +36,8 @@ void presentCanvas() {
         Rectangle{0.0f, 0.0f, static_cast<float>(screenWidth), static_cast<float>(screenHeight)},
         Vector2{0.0f, 0.0f},
         0.0f,
-        colors::PureWhite);
+        colors::PureWhite
+    );
 
     if (IsKeyPressed(KEY_F6)) {
         captureScreenshot = true;
@@ -44,9 +46,8 @@ void presentCanvas() {
     EndDrawing();
 
     if (captureScreenshot) {
-        char path[64];
-        std::snprintf(path, sizeof(path), "screenshot-%03d.png", screenshotIndex++);
-        TakeScreenshot(path);
+        auto path = std::format("screenshot-{:03d}.png", screenshotIndex++);
+        TakeScreenshot(path.c_str());
         captureScreenshot = false;
     }
 

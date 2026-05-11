@@ -46,6 +46,32 @@ std::string loadIndexText() {
     return readFileInternal(path.c_str());
 }
 
+template<typename Cache, typename Loader>
+typename Cache::mapped_type loadCached(Cache& cache, const char* name, Loader&& loader) {
+    if (auto it = cache.find(name); it != cache.end()) {
+        return it->second;
+    }
+
+    auto* resource = loader();
+    if (resource == nullptr) {
+        return nullptr;
+    }
+
+    cache.emplace(name, resource);
+    return resource;
+}
+
+template<typename Map>
+const typename Map::mapped_type* findPath(const Map& paths, const char* name, const char* kind) {
+    auto it = paths.find(name);
+    if (it == paths.end()) {
+        TraceLog(LOG_WARNING, "ASSETS: %s '%s' not found in index", kind, name);
+        return nullptr;
+    }
+
+    return &it->second;
+}
+
 void parseIndex(const std::string& indexText) {
     if (indexText.empty())
         return;
@@ -160,76 +186,55 @@ void manual_unload() {
 Shader* shader(const char* name) {
     init();
 
-    auto it = gShaderCache.find(name);
-    if (it != gShaderCache.end())
-        return it->second;
-
-    auto pathIt = gShaderPaths.find(name);
-    if (pathIt == gShaderPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Shader '%s' not found in index", name);
+    const ShaderPaths* paths = findPath(gShaderPaths, name, "Shader");
+    if (paths == nullptr) {
         return nullptr;
     }
 
-    std::string vertSource = readFileInternal(pathIt->second.vert.c_str());
-    std::string fragSource = readFileInternal(pathIt->second.frag.c_str());
-    auto* res = new Shader(vertSource.c_str(), fragSource.c_str());
-    gShaderCache[name] = res;
-    return res;
+    return loadCached(gShaderCache, name, [&]() {
+        const std::string vertSource = readFileInternal(paths->vert.c_str());
+        const std::string fragSource = readFileInternal(paths->frag.c_str());
+        return new Shader(vertSource.c_str(), fragSource.c_str());
+    });
 }
 
 Texture2D* texture(const char* name) {
     init();
 
-    auto it = gTextureCache.find(name);
-    if (it != gTextureCache.end())
-        return it->second;
-
-    auto pathIt = gTexturePaths.find(name);
-    if (pathIt == gTexturePaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Texture '%s' not found in index", name);
+    const std::string* path = findPath(gTexturePaths, name, "Texture");
+    if (path == nullptr) {
         return nullptr;
     }
 
-    auto* res = new Texture2D(LoadTexture(pathIt->second.c_str()));
-    gTextureCache[name] = res;
-    return res;
+    return loadCached(gTextureCache, name, [&]() {
+        return new Texture2D(LoadTexture(path->c_str()));
+    });
 }
 
 Font* font(const char* name) {
     init();
 
-    auto it = gFontCache.find(name);
-    if (it != gFontCache.end())
-        return it->second;
-
-    auto pathIt = gFontPaths.find(name);
-    if (pathIt == gFontPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Font '%s' not found in index", name);
+    const FontPath* path = findPath(gFontPaths, name, "Font");
+    if (path == nullptr) {
         return nullptr;
     }
 
-    int fontSize = pathIt->second.size;
-    auto* res = new Font(LoadFontEx(pathIt->second.path.c_str(), fontSize, nullptr, 0));
-    gFontCache[name] = res;
-    return res;
+    return loadCached(gFontCache, name, [&]() {
+        return new Font(LoadFontEx(path->path.c_str(), path->size, nullptr, 0));
+    });
 }
 
 Model* model(const char* name) {
     init();
 
-    auto it = gModelCache.find(name);
-    if (it != gModelCache.end())
-        return it->second;
-
-    auto pathIt = gModelPaths.find(name);
-    if (pathIt == gModelPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Model '%s' not found in index", name);
+    const std::string* path = findPath(gModelPaths, name, "Model");
+    if (path == nullptr) {
         return nullptr;
     }
 
-    auto* res = new Model(LoadModel(pathIt->second.c_str()));
-    gModelCache[name] = res;
-    return res;
+    return loadCached(gModelCache, name, [&]() {
+        return new Model(LoadModel(path->c_str()));
+    });
 }
 
 Image image(const char* name) {
@@ -254,13 +259,12 @@ std::string readFileInternal(const char* path) {
 std::string text(const char* name) {
     init();
 
-    auto pathIt = gTextPaths.find(name);
-    if (pathIt == gTextPaths.end()) {
-        TraceLog(LOG_WARNING, "ASSETS: Text '%s' not found in index", name);
+    const std::string* path = findPath(gTextPaths, name, "Text");
+    if (path == nullptr) {
         return {};
     }
 
-    return readFileInternal(pathIt->second.c_str());
+    return readFileInternal(path->c_str());
 }
 
 } // namespace engine::assets
