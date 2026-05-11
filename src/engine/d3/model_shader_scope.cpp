@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace engine {
+namespace engine::d3 {
 
 ModelShaderScope::ModelShaderScope(Model& model) : m_model(&model), m_enabled(false) {}
 
@@ -52,4 +52,4 @@ ModelShaderScope& ModelShaderScope::operator=(ModelShaderScope&& other) noexcept
     return *this;
 }
 
-} // namespace engine
+} // namespace engine::d3

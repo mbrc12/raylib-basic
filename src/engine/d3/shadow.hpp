@@ -1,11 +1,11 @@
 #pragma once
 
 #include "raylib.h"
-#include "vec3.hpp"
+#include "engine/vec3.hpp"
 
-namespace engine {
+namespace engine::d3 {
 
-struct DirectionalShadow {
+struct Shadow {
     RenderTexture2D map{};
     Camera3D camera{};
     Matrix lightVP{};
@@ -16,4 +16,4 @@ struct DirectionalShadow {
     void unload();
 };
 
-} // namespace engine
+} // namespace engine::d3

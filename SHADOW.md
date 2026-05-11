@@ -34,10 +34,10 @@ The relevant code currently lives in:
 - [src/main.cpp](/Users/subwave/dev/game/raylt/src/main.cpp)
 - [src/game_scene.cpp](/Users/subwave/dev/game/raylt/src/game_scene.cpp)
 - [src/engine/scene.hpp](/Users/subwave/dev/game/raylt/src/engine/scene.hpp)
-- [src/engine/shadow.hpp](/Users/subwave/dev/game/raylt/src/engine/shadow.hpp)
-- [src/engine/shadow.cpp](/Users/subwave/dev/game/raylt/src/engine/shadow.cpp)
-- [src/engine/model_shader_scope.hpp](/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.hpp)
-- [src/engine/model_shader_scope.cpp](/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.cpp)
+- [src/engine/d3/shadow.hpp](/Users/subwave/dev/game/raylt/src/engine/d3/shadow.hpp)
+- [src/engine/d3/shadow.cpp](/Users/subwave/dev/game/raylt/src/engine/d3/shadow.cpp)
+- [src/engine/d3/model_shader_scope.hpp](/Users/subwave/dev/game/raylt/src/engine/d3/model_shader_scope.hpp)
+- [src/engine/d3/model_shader_scope.cpp](/Users/subwave/dev/game/raylt/src/engine/d3/model_shader_scope.cpp)
 - [src/engine/material_slots.hpp](/Users/subwave/dev/game/raylt/src/engine/material_slots.hpp)
 - [src/engine/material_slots.cpp](/Users/subwave/dev/game/raylt/src/engine/material_slots.cpp)
 - [src/engine/shader.cpp](/Users/subwave/dev/game/raylt/src/engine/shader.cpp)
@@ -179,10 +179,10 @@ Shadow mapping only works if the depth pass and the lighting pass use the same t
 
 ## 3. The Directional Light Camera
 
-The shadow camera is set up in [src/engine/shadow.cpp]:
+The shadow camera is set up in [src/engine/d3/shadow.cpp]:
 
 ```cpp
-void DirectionalShadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
+void Shadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
     map = LoadRenderTexture(size, size);
     SetTextureFilter(map.texture, TEXTURE_FILTER_POINT);
     SetTextureWrap(map.texture, TEXTURE_WRAP_CLAMP);
@@ -271,7 +271,7 @@ void drawDepthPass() {
 }
 ```
 
-The helper [src/engine/model_shader_scope.cpp] temporarily overrides every material shader in a model:
+The helper [src/engine/d3/model_shader_scope.cpp] temporarily overrides every material shader in a model:
 
 ```cpp
 ModelShaderScope::ModelShaderScope(Model& model) : m_model(&model) {}
@@ -289,7 +289,7 @@ This keeps the depth pass isolated from the normal lighting shader without havin
 
 ### Depth pass state
 
-The depth pass turns on three important GL-state changes in [src/engine/shadow.cpp]:
+The depth pass turns on three important GL-state changes in [src/engine/d3/shadow.cpp]:
 
 ```cpp
 BeginTextureMode(map);
@@ -614,7 +614,7 @@ This does not change the shadow math, but it does affect perception. Lower inter
 
 ## 11. What Each Piece Does
 
-### `src/engine/shadow.*`
+### `src/engine/d3/shadow.*`
 
 Owns the shadow render target and the light camera state.
 
@@ -623,7 +623,7 @@ Owns the shadow render target and the light camera state.
 - computes `lightVP`
 - manages render-state changes for the shadow pass
 
-### `src/engine/model_shader_scope.*`
+### `src/engine/d3/model_shader_scope.*`
 
 Temporarily replaces a model's material shaders with the depth shader, then restores them automatically.
 
@@ -734,7 +734,7 @@ constexpr int shadowMapSize = 512;
 constexpr Vec3 sunDirection{-0.4f, 1.0f, 0.6f};
 ```
 
-From [src/engine/shadow.cpp]:
+From [src/engine/d3/shadow.cpp]:
 
 ```cpp
 Matrix lightProj = MatrixOrtho(-orthoSize, orthoSize, -orthoSize, orthoSize, 0.1f, 200.0f);

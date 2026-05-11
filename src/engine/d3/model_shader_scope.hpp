@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace engine {
+namespace engine::d3 {
 
 class ModelShaderScope {
   public:
@@ -26,4 +26,4 @@ class ModelShaderScope {
     bool m_enabled = false;
 };
 
-} // namespace engine
+} // namespace engine::d3

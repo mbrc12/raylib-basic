@@ -1,6 +1,7 @@
 #include "collision.hpp"
 #include <cmath>
 
+namespace engine::d3 {
 namespace {
 
 constexpr float INF = 1e30f;
@@ -19,12 +20,12 @@ void liang_barsky(Vec3 v, const Vec3& mn, const Vec3& mx, float& t1, Vec3& n1, f
     n2 = {};
 
     Face faces[] = {
-        {{-1, 0, 0}, -v.x, -mn.x}, // -x (min x)
-        {{1, 0, 0}, v.x, mx.x},    // +x (max x)
-        {{0, -1, 0}, -v.y, -mn.y}, // -y (min y)
-        {{0, 1, 0}, v.y, mx.y},    // +y (max y)
-        {{0, 0, -1}, -v.z, -mn.z}, // -z (min z)
-        {{0, 0, 1}, v.z, mx.z},    // +z (max z)
+        {{-1, 0, 0}, -v.x, -mn.x},
+        {{1, 0, 0}, v.x, mx.x},
+        {{0, -1, 0}, -v.y, -mn.y},
+        {{0, 1, 0}, v.y, mx.y},
+        {{0, 0, -1}, -v.z, -mn.z},
+        {{0, 0, 1}, v.z, mx.z},
     };
 
     for (auto& f : faces) {
@@ -133,3 +134,5 @@ SweepResult sweep(const Box& body, Vec3 target, const Box& other) {
 
     return {t, pos, normal, intersect};
 }
+
+} // namespace engine::d3

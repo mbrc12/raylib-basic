@@ -296,13 +296,13 @@ href="/Users/subwave/dev/game/raylt/src/game_scene.cpp">src/game_scene.cpp</a></
 <li><a
 href="/Users/subwave/dev/game/raylt/src/engine/scene.hpp">src/engine/scene.hpp</a></li>
 <li><a
-href="/Users/subwave/dev/game/raylt/src/engine/shadow.hpp">src/engine/shadow.hpp</a></li>
+href="/Users/subwave/dev/game/raylt/src/engine/d3/shadow.hpp">src/engine/d3/shadow.hpp</a></li>
 <li><a
-href="/Users/subwave/dev/game/raylt/src/engine/shadow.cpp">src/engine/shadow.cpp</a></li>
+href="/Users/subwave/dev/game/raylt/src/engine/d3/shadow.cpp">src/engine/d3/shadow.cpp</a></li>
 <li><a
-href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.hpp">src/engine/model_shader_scope.hpp</a></li>
+href="/Users/subwave/dev/game/raylt/src/engine/d3/model_shader_scope.hpp">src/engine/d3/model_shader_scope.hpp</a></li>
 <li><a
-href="/Users/subwave/dev/game/raylt/src/engine/model_shader_scope.cpp">src/engine/model_shader_scope.cpp</a></li>
+href="/Users/subwave/dev/game/raylt/src/engine/d3/model_shader_scope.cpp">src/engine/d3/model_shader_scope.cpp</a></li>
 <li><a
 href="/Users/subwave/dev/game/raylt/src/engine/material_slots.hpp">src/engine/material_slots.hpp</a></li>
 <li><a
@@ -451,9 +451,9 @@ result is either:</p>
 </ul>
 <h2 id="the-directional-light-camera">3. The Directional Light
 Camera</h2>
-<p>The shadow camera is set up in [src/engine/shadow.cpp]:</p>
+<p>The shadow camera is set up in [src/engine/d3/shadow.cpp]:</p>
 <div class="sourceCode" id="cb3"><pre
-class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> DirectionalShadow<span class="op">::</span>init<span class="op">(</span><span class="dt">int</span> size<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> sunDir<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> target<span class="op">,</span> <span class="dt">float</span> distance<span class="op">,</span> <span class="dt">float</span> orthoSize<span class="op">)</span> <span class="op">{</span></span>
+class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Shadow<span class="op">::</span>init<span class="op">(</span><span class="dt">int</span> size<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> sunDir<span class="op">,</span> <span class="at">const</span> Vec3<span class="op">&amp;</span> target<span class="op">,</span> <span class="dt">float</span> distance<span class="op">,</span> <span class="dt">float</span> orthoSize<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    map <span class="op">=</span> LoadRenderTexture<span class="op">(</span>size<span class="op">,</span> size<span class="op">);</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    SetTextureFilter<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_FILTER_POINT<span class="op">);</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    SetTextureWrap<span class="op">(</span>map<span class="op">.</span>texture<span class="op">,</span> TEXTURE_WRAP_CLAMP<span class="op">);</span></span>
@@ -539,8 +539,8 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#c
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    terrainDepth<span class="op">.</span>disable<span class="op">();</span></span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    shadow<span class="op">.</span>endDepthPass<span class="op">();</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>The helper [src/engine/model_shader_scope.cpp] temporarily overrides
-every material shader in a model:</p>
+<p>The helper [src/engine/d3/model_shader_scope.cpp] temporarily
+overrides every material shader in a model:</p>
 <div class="sourceCode" id="cb5"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ModelShaderScope<span class="op">::</span>ModelShaderScope<span class="op">(</span>Model<span class="op">&amp;</span> model<span class="op">)</span> <span class="op">:</span> <span class="va">m_model</span><span class="op">(&amp;</span>model<span class="op">)</span> <span class="op">{}</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -555,7 +555,7 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#c
 without having to permanently mutate the model materials.</p>
 <h3 id="depth-pass-state">Depth pass state</h3>
 <p>The depth pass turns on three important GL-state changes in
-[src/engine/shadow.cpp]:</p>
+[src/engine/d3/shadow.cpp]:</p>
 <div class="sourceCode" id="cb6"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>BeginTextureMode<span class="op">(</span>map<span class="op">);</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ClearBackground<span class="op">(</span>WHITE<span class="op">);</span></span>
@@ -838,7 +838,7 @@ class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#
 Lower internal resolution makes shadow edges look more stylized and less
 expensive to compute, which fits the intended pixelated style.</p>
 <h2 id="what-each-piece-does">11. What Each Piece Does</h2>
-<h3 id="srcengineshadow."><code>src/engine/shadow.*</code></h3>
+<h3 id="srcengined3shadow."><code>src/engine/d3/shadow.*</code></h3>
 <p>Owns the shadow render target and the light camera state.</p>
 <ul>
 <li>creates the shadow texture</li>
@@ -847,7 +847,7 @@ expensive to compute, which fits the intended pixelated style.</p>
 <li>manages render-state changes for the shadow pass</li>
 </ul>
 <h3
-id="srcenginemodel_shader_scope."><code>src/engine/model_shader_scope.*</code></h3>
+id="srcengined3model_shader_scope."><code>src/engine/d3/model_shader_scope.*</code></h3>
 <p>Temporarily replaces a model’s material shaders with the depth
 shader, then restores them automatically.</p>
 <p>This is a local cleanup layer over a raylib limitation: model
@@ -933,7 +933,7 @@ texels.</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> shadowMapSize <span class="op">=</span> <span class="dv">512</span><span class="op">;</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> Vec3 sunDirection<span class="op">{-</span><span class="fl">0.4</span><span class="bu">f</span><span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span> <span class="fl">0.6</span><span class="bu">f</span><span class="op">};</span></span></code></pre></div>
-<p>From [src/engine/shadow.cpp]:</p>
+<p>From [src/engine/d3/shadow.cpp]:</p>
 <div class="sourceCode" id="cb17"><pre
 class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>Matrix lightProj <span class="op">=</span> MatrixOrtho<span class="op">(-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="op">-</span>orthoSize<span class="op">,</span> orthoSize<span class="op">,</span> <span class="fl">0.1</span><span class="bu">f</span><span class="op">,</span> <span class="fl">200.0</span><span class="bu">f</span><span class="op">);</span></span></code></pre></div>
 <p>From [assets/shaders/lambert.frag]:</p>

@@ -3,9 +3,9 @@
 #include "raymath.h"
 #include "rlgl.h"
 
-namespace engine {
+namespace engine::d3 {
 
-void DirectionalShadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
+void Shadow::init(int size, const Vec3& sunDir, const Vec3& target, float distance, float orthoSize) {
     map = LoadRenderTexture(size, size);
     SetTextureFilter(map.texture, TEXTURE_FILTER_POINT);
     SetTextureWrap(map.texture, TEXTURE_WRAP_CLAMP);
@@ -24,7 +24,7 @@ void DirectionalShadow::init(int size, const Vec3& sunDir, const Vec3& target, f
     camera.projection = CAMERA_ORTHOGRAPHIC;
 }
 
-void DirectionalShadow::beginDepthPass() {
+void Shadow::beginDepthPass() {
     BeginTextureMode(map);
     ClearBackground(WHITE);
     rlDisableColorBlend();
@@ -33,7 +33,7 @@ void DirectionalShadow::beginDepthPass() {
     BeginMode3D(camera);
 }
 
-void DirectionalShadow::endDepthPass() {
+void Shadow::endDepthPass() {
     EndMode3D();
     rlSetCullFace(RL_CULL_FACE_BACK);
     rlDisableBackfaceCulling();
@@ -41,11 +41,11 @@ void DirectionalShadow::endDepthPass() {
     EndTextureMode();
 }
 
-void DirectionalShadow::unload() {
+void Shadow::unload() {
     if (IsRenderTextureValid(map)) {
         UnloadRenderTexture(map);
         map = {};
     }
 }
 
-} // namespace engine
+} // namespace engine::d3

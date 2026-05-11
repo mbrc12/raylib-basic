@@ -4,11 +4,11 @@
 
 #include "colors.hpp"
 #include "engine/assets.hpp"
-#include "engine/free_camera.hpp"
+#include "engine/d3/free_camera.hpp"
+#include "engine/d3/model_shader_scope.hpp"
+#include "engine/d3/shadow.hpp"
 #include "engine/input.hpp"
 #include "engine/material_slots.hpp"
-#include "engine/model_shader_scope.hpp"
-#include "engine/shadow.hpp"
 #include "engine/util.hpp"
 
 namespace {
@@ -20,7 +20,7 @@ constexpr int shadowMapSize = 512;
 constexpr Vec3 fishScale{5.0f, 5.0f, 5.0f};
 constexpr Vec3 sunDirection{-0.4f, 1.0f, 0.6f};
 
-Model generateTerrain(Texture2D* terrainTex, engine::Shader* lambert, const engine::DirectionalShadow& shadow) {
+Model generateTerrain(Texture2D* terrainTex, engine::Shader* lambert, const engine::d3::Shadow& shadow) {
     Image img = GenImageColor(terrainTexSize, terrainTexSize, BLACK);
 
     SetRandomSeed(42);
@@ -60,8 +60,8 @@ struct GameScene::Impl {
     Model terrainModel{};
     Texture2D terrainTex{};
     Camera3D camera{};
-    engine::DirectionalShadow shadow{};
-    engine::FreeCameraController cameraController{};
+    engine::d3::Shadow shadow{};
+    engine::d3::FreeCamera cameraController{};
     float totalTime = 0.0f;
 
     void load() {
@@ -106,8 +106,8 @@ struct GameScene::Impl {
     void drawDepthPass() {
         shadow.beginDepthPass();
 
-        engine::ModelShaderScope terrainDepth(terrainModel);
-        engine::ModelShaderScope fishDepth(*fish);
+        engine::d3::ModelShaderScope terrainDepth(terrainModel);
+        engine::d3::ModelShaderScope fishDepth(*fish);
         terrainDepth.enable(depth->raw());
         fishDepth.enable(depth->raw());
         depth->send("lightVP", shadow.lightVP);

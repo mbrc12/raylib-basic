@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cmath>
 
-#include "input.hpp"
+#include "engine/input.hpp"
 
-namespace engine {
+namespace engine::d3 {
 namespace {
 
 float clampf(float v, float lo, float hi) {
@@ -22,10 +22,10 @@ Vec3 forwardFromAngles(float yaw, float pitch) {
 
 } // namespace
 
-void FreeCameraController::reset(const Camera3D& camera) {
+void FreeCamera::reset(const Camera3D& camera) {
     m_up = camera.up;
 
-    Vec3 forward = Vec3(camera.target) - camera.position;
+    Vec3 forward = Vec3(camera.target) - Vec3(camera.position);
     forward = forward.norm();
 
     if (forward.lenSqr() <= 0.0f) {
@@ -36,11 +36,11 @@ void FreeCameraController::reset(const Camera3D& camera) {
     m_yaw = std::atan2f(forward.x, forward.z);
 }
 
-void FreeCameraController::setMoveSpeed(float speed) { m_moveSpeed = std::max(0.0f, speed); }
+void FreeCamera::setMoveSpeed(float speed) { m_moveSpeed = std::max(0.0f, speed); }
 
-void FreeCameraController::setSpeedStep(float step) { m_speedStep = std::max(0.0f, step); }
+void FreeCamera::setSpeedStep(float step) { m_speedStep = std::max(0.0f, step); }
 
-void FreeCameraController::update(Camera3D* camera, float dt) {
+void FreeCamera::update(Camera3D* camera, float dt) {
     if (camera == nullptr) {
         return;
     }
@@ -70,4 +70,4 @@ void FreeCameraController::update(Camera3D* camera, float dt) {
     camera->up = m_up;
 }
 
-} // namespace engine
+} // namespace engine::d3

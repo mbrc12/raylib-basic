@@ -1,11 +1,11 @@
 #pragma once
 
 #include "raylib.h"
-#include "vec3.hpp"
+#include "engine/vec3.hpp"
 
-namespace engine {
+namespace engine::d3 {
 
-class FreeCameraController {
+class FreeCamera {
   public:
     void reset(const Camera3D& camera);
 
@@ -23,4 +23,4 @@ class FreeCameraController {
     float m_speedStep = 8.0f;
 };
 
-} // namespace engine
+} // namespace engine::d3
