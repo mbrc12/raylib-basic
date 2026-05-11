@@ -92,8 +92,8 @@ struct GameScene::Impl {
         }
         engine::setTextureSlot(*fish, engine::MaterialTextureSlot::ShadowMap, shadow.map.texture);
 
-        lambert->send("ambient", Color{60, 70, 90, 255});
-        lambert->send("diffuse", Color{255, 245, 230, 255});
+        lambert->send("ambient", colors::SteamLords_SteelBlue);
+        lambert->send("diffuse", colors::SteamLords_PaleTeal);
     }
 
     void detachSceneTextures() {
@@ -128,7 +128,7 @@ struct GameScene::Impl {
         lambert->send("lightDir", sunDirection);
         lambert->send("viewPos", camera.position);
         lambert->send("fogColor", colors::SteamLords_SteelBlue);
-        lambert->send("fogDensity", 0.0f);
+        lambert->send("fogDensity", 0.03f * sin(totalTime * 0.3));
         lambert->send("lightVP", shadow.lightVP);
 
         DrawModel(terrainModel, Vec3::Origin, 1.0f, WHITE);
