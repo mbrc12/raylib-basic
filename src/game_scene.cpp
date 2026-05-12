@@ -5,6 +5,8 @@
 #include "engine/registry.hpp"
 #include "engine/input.hpp"
 
+constexpr float SPEED = 200.0f;
+
 struct GameScene::Impl {
     float totalTime = 0.0f;
     RenderTexture2D canvas{};
@@ -29,12 +31,12 @@ struct GameScene::Impl {
         if (down(Action::Left)) {
             dir.x -= 1.0f;
         }
-        return dir;
+        return dir.unit();
     }
 
     void update(float dt) { 
         totalTime += dt; 
-        pos += direction() * 100.0f * dt;
+        pos += direction() * SPEED * dt;
     }
 
     void draw() {
@@ -55,7 +57,7 @@ struct GameScene::Impl {
         // shader->disable();
 
         auto sprite = engine::assets::sprite("player");
-        sprite->draw({.pos = pos, .scale = 2.0});
+        sprite->draw({.pos = pos.round(), .scale = 2.0});
 
         // DrawRectangle(199, 99, 2, 2, colors::SteamLords_Mahogany);
 
