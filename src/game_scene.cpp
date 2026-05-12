@@ -12,7 +12,7 @@ struct GameScene::Impl {
     float totalTime = 0.0f;
     RenderTexture2D canvas{};
 
-    void load() { dbg("Loading scene assets"); }
+    void load() {}
 
     void enter() {}
 
@@ -20,7 +20,7 @@ struct GameScene::Impl {
 
     void draw() {
         auto canvas = engine::registry::get<RenderTexture2D>();
-        BeginTextureMode(canvas);
+        BeginTextureMode(*canvas);
         ClearBackground(colors::SteamLords_MidnightBlack);
 
         auto tc = colors::SteamLords_ForestGreen;
