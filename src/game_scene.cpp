@@ -21,14 +21,8 @@ struct GameScene::Impl {
     void draw() {
         auto canvas = engine::registry::get<RenderTexture2D>();
         BeginTextureMode(*canvas);
+
         ClearBackground(colors::SteamLords_MidnightBlack);
-
-        auto tc = colors::SteamLords_ForestGreen;
-
-        std::string overlay = "FPS: " + std::to_string(GetFPS()) + "  " + engine::input::compressed_state();
-        engine::drawText(overlay, 0, 0, tc);
-        auto v = engine::measureText(overlay).as<int>();
-        DrawRectangleLines(0, 0, v.x, v.y, tc);
 
         EndTextureMode();
     }

@@ -13,7 +13,7 @@ using bucket_type = std::unordered_map<std::string, T*>;
 
 template<typename T>
 bucket_type<T>& bucket() {
-    static bucket_type<T*> items;
+    static bucket_type<T> items;
     return items;
 }
 

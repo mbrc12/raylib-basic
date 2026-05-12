@@ -1,4 +1,5 @@
 #include "engine/registry.hpp"
+#include "engine/text.hpp"
 #include "raylib.h"
 
 #include <format>
@@ -38,6 +39,9 @@ void presentCanvas() {
         0.0f,
         colors::PureWhite
     );
+
+    std::string overlay = "FPS: " + std::to_string(GetFPS()) + "  " + engine::input::compressed_state();
+    engine::drawText(overlay, 0, 0, colors::SteamLords_Mahogany, 24);
 
     if (IsKeyPressed(KEY_F6)) {
         captureScreenshot = true;
