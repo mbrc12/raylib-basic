@@ -1,8 +1,13 @@
 [shaders]
+effect = { vert = "effect.vert", frag = "effect.frag" }
 lambert = { vert = "lambert.vert", frag = "lambert.frag" }
 depth = { vert = "depth.vert", frag = "depth.frag" }
 
 [textures]
+ss = "ss.png"
+
+[sprites]
+player = { texture = "ss", x = 0, y = 0, w = 16, h = 16, center = true }
 
 [fonts]
 main = { path = "capital-hill.ttf", size = 12 }

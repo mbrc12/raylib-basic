@@ -19,8 +19,8 @@ if set -q _flag_compile
             exit 1
     end
 
-    fish build.fish --no-run "$target"; or exit 1
-    __dev_watch_files | sort -u | entr -c fish build.fish --no-run "$target"
+    fish build.fish -d --no-run "$target"; or exit 1
+    __dev_watch_files | sort -u | entr -c fish build.fish -d --no-run "$target"
     exit 0
 end
 

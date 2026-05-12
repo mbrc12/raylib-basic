@@ -40,7 +40,7 @@ void presentCanvas() {
         colors::PureWhite
     );
 
-    std::string overlay = std::to_string(GetFPS()) + "fps  " + engine::input::compressed_state();
+    auto overlay = std::to_string(GetFPS()) + " fps" + engine::input::compressed_state();
     engine::drawText(overlay, 0, 0, colors::SteamLords_Mahogany, 24);
 
     if (IsKeyPressed(KEY_F6)) {

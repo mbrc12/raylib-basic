@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "engine/d2/sprite.hpp"
 #include "raylib.h"
 #include "shader.hpp"
 
@@ -15,6 +16,7 @@ Texture2D* texture(const char* name);
 Font* font(const char* name);
 Model* model(const char* name);
 std::string text(const char* name);
+d2::Sprite* sprite(const char* name);
 
 Image image(const char* name);
 
