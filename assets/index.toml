@@ -7,7 +7,7 @@ depth = { vert = "depth.vert", frag = "depth.frag" }
 ss = "ss.png"
 
 [sprites]
-player = { texture = "ss", x = 0, y = 0, w = 16, h = 16, center = true }
+player = { texture = "ss", x = 0, y = 0, w = 16, h = 16, center = true, ninepatch = { l = 2, r = 2, t = 2, b = 2 } }
 
 [fonts]
 main = { path = "capital-hill.ttf", size = 12 }

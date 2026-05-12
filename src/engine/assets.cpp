@@ -182,9 +182,22 @@ void parseIndex(const std::string& indexText) {
             auto w = toml_get<int>(spriteTable, "w");
             auto h = toml_get<int>(spriteTable, "h");
             auto center = toml_get_opt<bool>(spriteTable, "center").value_or(false);
-            gSprites[key_] = new d2::Sprite(texture, x, y, w, h, center);
+            auto sprite = new d2::Sprite(texture, x, y, w, h, center);
+
             dbg("ASSETS: Loaded sprite '%s' from texture '%s' at (%d, %d, %d, %d)", key_.c_str(), texture.c_str(), x, y,
                 w, h);
+            
+            if (spriteTable.contains("ninepatch")) {
+                auto ninepatchTable = toml_get<toml::table>(spriteTable, "ninepatch");
+                auto l = toml_get<int>(ninepatchTable, "l");
+                auto r = toml_get<int>(ninepatchTable, "r");
+                auto t = toml_get<int>(ninepatchTable, "t");
+                auto b = toml_get<int>(ninepatchTable, "b");
+                sprite->configureNinepatch(l, r, t, b);
+                dbg("ASSETS: Configured ninepatch for sprite '%s' with l=%d, r=%d, t=%d, b=%d", key_.c_str(), l, r, t, b);
+            }
+
+            gSprites[key_] = sprite;
         }
     }
 

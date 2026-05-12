@@ -15,6 +15,13 @@ struct SpriteDrawConfig {
     Color tint = colors::PureWhite;
 };
 
+struct NinepatchData {
+    int l;
+    int r;
+    int t;
+    int b;
+};
+
 struct NinepatchDrawConfig {
     Vec2f pos;
     Vec2f size;
@@ -28,7 +35,8 @@ class Sprite {
   public:
     Sprite(std::string texture, int x, int y, int width, int height, bool center);
     ~Sprite() = default;
-
+    
+    void configureNinepatch(int l, int r, int t, int b);
     void draw(SpriteDrawConfig cfg) const;
     void drawNinepatch(NinepatchDrawConfig cfg) const;
 
@@ -39,5 +47,6 @@ class Sprite {
     int m_width;
     int m_height;
     bool m_center;
+    std::optional<NinepatchData> m_ninepatch;
 };
 }

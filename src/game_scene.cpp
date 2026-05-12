@@ -46,20 +46,20 @@ struct GameScene::Impl {
         ClearBackground(colors::SteamLords_MidnightBlack);
 
         auto shader = engine::assets::shader("effect");
-        // shader->send("colorA", colors::SteamLords_IndigoBerry);
-        // shader->send("colorB", colors::SteamLords_MidnightBlack);
-        // shader->send("time", totalTime);
-        // shader->send("size", Vec2f{100.0f, 100.0f});
-        // shader->enable();
-        //
-        // DrawRectangle(20, 20, 100, 100, colors::PureWhite);
-        //
-        // shader->disable();
+        shader->send("colorA", colors::SteamLords_IndigoBerry);
+        shader->send("colorB", colors::SteamLords_MidnightBlack);
+        shader->send("time", totalTime);
+        shader->send("size", Vec2f{100.0f, 100.0f});
+        shader->enable();
+
+        DrawRectangle(20, 20, 100, 100, colors::PureWhite);
+
+        shader->disable();
 
         auto sprite = engine::assets::sprite("player");
-        sprite->draw({.pos = pos.round(), .scale = 2.0});
+        sprite->drawNinepatch({.pos = pos.round(), .rot=45, .flipX = false, .size={90, 20}});
 
-        // DrawRectangle(199, 99, 2, 2, colors::SteamLords_Mahogany);
+        DrawRectangle(pos.x, pos.y, 2, 2, colors::SteamLords_PaleTeal);
 
         EndTextureMode();
     }
