@@ -76,7 +76,7 @@ int main() {
     canvas = LoadRenderTexture(gameRenderWidth, gameRenderHeight);
     SetTextureFilter(canvas.texture, TEXTURE_FILTER_POINT);
 
-    engine::registry::store(canvas);
+    engine::registry::store(&canvas);
 
     engine::input::init();
     scene.load();
