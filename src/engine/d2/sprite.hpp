@@ -15,12 +15,22 @@ struct SpriteDrawConfig {
     Color tint = colors::PureWhite;
 };
 
+struct NinepatchDrawConfig {
+    Vec2f pos;
+    Vec2f size;
+    float rot = 0.0f;
+    bool flipX = false;
+    bool flipY = false;
+    Color tint = colors::PureWhite;
+};
+
 class Sprite {
   public:
     Sprite(std::string texture, int x, int y, int width, int height, bool center);
     ~Sprite() = default;
 
     void draw(SpriteDrawConfig cfg) const;
+    void drawNinepatch(NinepatchDrawConfig cfg) const;
 
   private:
     std::string m_textureName;

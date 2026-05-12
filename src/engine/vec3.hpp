@@ -21,6 +21,31 @@ struct Vec3 {
     Vec3 operator*(T s)         const { return {x * s, y * s, z * s}; }
     Vec3 operator/(T s)         const { return {x / s, y / s, z / s}; }
 
+    Vec3& operator+=(const Vec3& o) {
+        x += o.x;
+        y += o.y;
+        z += o.z;
+        return *this;
+    }
+    Vec3& operator-=(const Vec3& o) {
+        x -= o.x;
+        y -= o.y;
+        z -= o.z;
+        return *this;
+    }
+    Vec3& operator*=(T s) {
+        x *= s;
+        y *= s;
+        z *= s;
+        return *this;
+    }
+    Vec3& operator/=(T s) {
+        x /= s;
+        y /= s;
+        z /= s;
+        return *this;
+    }
+
     template<typename S>
     Vec3<S> as() const { return {static_cast<S>(x), static_cast<S>(y), static_cast<S>(z)}; }
 

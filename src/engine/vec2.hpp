@@ -21,6 +21,27 @@ struct Vec2 {
     Vec2 operator*(T s)         const { return {x * s, y * s}; }
     Vec2 operator/(T s)         const { return {x / s, y / s}; }
 
+    Vec2& operator+=(const Vec2& o) {
+        x += o.x;
+        y += o.y;
+        return *this;
+    }
+    Vec2& operator-=(const Vec2& o) {
+        x -= o.x;
+        y -= o.y;
+        return *this;
+    }
+    Vec2& operator*=(T s) {
+        x *= s;
+        y *= s;
+        return *this;
+    }
+    Vec2& operator/=(T s) {
+        x /= s;
+        y /= s;
+        return *this;
+    }
+
     template<typename S>
     Vec2<S> as() const { return {static_cast<S>(x), static_cast<S>(y)}; }
 
